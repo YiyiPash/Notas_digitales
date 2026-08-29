@@ -3,926 +3,618 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>Yiyi Pash · Nota Digital</title>
+  <title>Yiyi Pash · Notas</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --p:#be185d; --pm:#ec4899; --pl:#fdf2f8; --pb:#fce7f3; --tx:#1f2937; --mu:#6b7280; }
+    body { font-family:'Poppins',sans-serif; background:var(--pl); min-height:100vh; padding:10px 10px 40px; color:var(--tx); }
 
-    :root {
-      --p  : #be185d;
-      --pm : #ec4899;
-      --pl : #fdf2f8;
-      --pb : #fce7f3;
-      --tx : #1f2937;
-      --mu : #6b7280;
-      --r  : 12px;
-    }
+    /* TAB BAR */
+    #tab-bar-wrap { max-width:480px; margin:0 auto 8px; display:flex; align-items:center; gap:6px; }
+    #tab-bar { flex:1; display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+    #tab-bar::-webkit-scrollbar { display:none; }
+    .tab { display:inline-flex; align-items:center; gap:5px; padding:6px 10px; background:#fff; border:1.5px solid var(--pb); border-radius:10px; cursor:pointer; font-size:11px; font-weight:500; color:var(--mu); white-space:nowrap; flex-shrink:0; transition:all .15s; }
+    .tab.active { background:var(--p); border-color:var(--p); color:#fff; }
+    .tab-name { max-width:90px; overflow:hidden; text-overflow:ellipsis; }
+    .tab-x { font-size:14px; line-height:1; opacity:.6; }
+    .tab-x:hover { opacity:1; }
+    #add-tab-btn { width:32px; height:32px; flex-shrink:0; border:1.5px dashed var(--pb); border-radius:10px; background:transparent; color:var(--p); font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--pl);
-      min-height: 100vh;
-      padding: 12px 12px 40px;
-      color: var(--tx);
-    }
+    /* CARD */
+    .card { max-width:480px; margin:0 auto; background:#fff; border-radius:20px; box-shadow:0 4px 32px rgba(190,24,93,.12); }
 
-    /* ── CARD ─────────────────────────────────────────────── */
-    .card {
-      max-width: 480px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 4px 32px rgba(190,24,93,.12);
-    }
+    /* LOADING */
+    #loading-screen { max-width:480px; margin:0 auto; background:#fff; border-radius:20px; padding:64px 24px; text-align:center; box-shadow:0 4px 32px rgba(190,24,93,.12); }
+    .spinner { width:40px; height:40px; border:3px solid var(--pb); border-top-color:var(--p); border-radius:50%; animation:spin .75s linear infinite; margin:0 auto 16px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* ── LOADING ──────────────────────────────────────────── */
-    #loading-screen {
-      max-width: 480px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 20px;
-      padding: 64px 24px;
-      text-align: center;
-      box-shadow: 0 4px 32px rgba(190,24,93,.12);
-    }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--pb);
-      border-top-color: var(--p);
-      border-radius: 50%;
-      animation: spin .75s linear infinite;
-      margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* HEADER */
+    .nota-header { background:linear-gradient(135deg,var(--p),var(--pm)); padding:18px 20px; border-radius:20px 20px 0 0; display:flex; justify-content:space-between; align-items:center; }
+    .logo { color:#fff; font-size:20px; font-weight:700; letter-spacing:2px; line-height:1.2; }
+    .logo small { display:block; font-size:10px; font-weight:400; color:#fce7f3; margin-top:2px; }
+    .nota-ref { text-align:right; }
+    .nota-ref .lbl { font-size:9px; color:#fce7f3; text-transform:uppercase; letter-spacing:.5px; }
+    .nota-ref .val { font-size:13px; font-weight:600; color:#fff; }
 
-    /* ── HEADER ───────────────────────────────────────────── */
-    .nota-header {
-      background: linear-gradient(135deg, var(--p) 0%, var(--pm) 100%);
-      padding: 20px;
-      border-radius: 20px 20px 0 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo {
-      color: #fff;
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      line-height: 1.2;
-    }
-    .logo small {
-      display: block;
-      font-size: 10px;
-      font-weight: 400;
-      letter-spacing: .3px;
-      color: #fce7f3;
-      margin-top: 3px;
-    }
-    .nota-num-box {
-      text-align: right;
-      color: #fff;
-    }
-    .nota-num-box .lbl { font-size: 10px; color: #fce7f3; }
-    .nota-num-box .val { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+    /* SECCIONES */
+    .section { padding:13px 16px; border-bottom:1px solid var(--pb); }
 
-    /* ── SECCIONES ────────────────────────────────────────── */
-    .section {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--pb);
-    }
+    /* FIELDS */
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .field { display:flex; flex-direction:column; gap:3px; }
+    .field label { font-size:10px; font-weight:600; color:var(--p); text-transform:uppercase; letter-spacing:.8px; }
+    .field select, .field input[type=text], .field input[type=email], .field input[type=date] { border:1.5px solid var(--pb); border-radius:8px; padding:8px 10px; font-family:'Poppins',sans-serif; font-size:13px; color:var(--tx); background:#fff; outline:none; transition:border-color .15s; -webkit-appearance:none; appearance:none; width:100%; }
+    .field select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239ca3af' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 9px center; padding-right:26px; }
+    .field select:focus, .field input:focus { border-color:var(--p); }
 
-    /* ── FIELDS ───────────────────────────────────────────── */
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--p);
-      text-transform: uppercase;
-      letter-spacing: .8px;
-    }
-    .field select,
-    .field input[type=text],
-    .field input[type=email],
-    .field input[type=date] {
-      border: 1.5px solid var(--pb);
-      border-radius: 8px;
-      padding: 9px 11px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 14px;
-      color: var(--tx);
-      background: #fff;
-      outline: none;
-      transition: border-color .15s;
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-    }
-    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239ca3af' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
-    .field select:focus,
-    .field input:focus { border-color: var(--p); }
+    /* SEARCH */
+    .items-lbl { font-size:10px; font-weight:600; color:var(--p); text-transform:uppercase; letter-spacing:.8px; margin-bottom:9px; }
+    .search-wrap { position:relative; }
+    .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:14px; pointer-events:none; }
+    .search-input { width:100%; border:1.5px solid var(--pb); border-radius:10px; padding:9px 12px 9px 34px; font-family:'Poppins',sans-serif; font-size:13px; color:var(--tx); outline:none; transition:border-color .15s; }
+    .search-input:focus { border-color:var(--p); }
+    .search-results { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1.5px solid var(--pb); border-radius:10px; box-shadow:0 8px 28px rgba(0,0,0,.1); max-height:220px; overflow-y:auto; z-index:200; }
+    .search-results.open { display:block; }
+    .r-item { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--pb); transition:background .1s; }
+    .r-item:last-child { border-bottom:none; }
+    .r-item:hover { background:var(--pl); }
+    .r-badge { font-size:9px; font-weight:700; padding:2px 5px; border-radius:5px; flex-shrink:0; min-width:30px; text-align:center; }
+    .r-info { flex:1; min-width:0; }
+    .r-name { font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .r-sku { font-size:10px; color:var(--mu); }
+    .r-price { font-size:12px; font-weight:600; color:var(--p); flex-shrink:0; }
+    .no-r { padding:14px; text-align:center; font-size:13px; color:var(--mu); }
+    .c-TAT{background:#ede9fe;color:#7c3aed;} .c-PIR{background:#fce7f3;color:#be185d;}
+    .c-PAQ{background:#fff7ed;color:#c2410c;} .c-PTN{background:#f0fdf4;color:#15803d;}
+    .c-HUG{background:#fef9c3;color:#92400e;} .c-AFC{background:#ecfdf5;color:#065f46;}
+    .c-REP{background:#eff6ff;color:#1e40af;} .c-RET{background:#f3e8ff;color:#6d28d9;}
+    .c-SRV{background:#e0f2fe;color:#0369a1;} .c-DEF{background:#f3f4f6;color:#374151;}
 
-    /* ── SEARCH ───────────────────────────────────────────── */
-    .items-lbl {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--p);
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      margin-bottom: 10px;
-    }
-    .search-wrap { position: relative; }
-    .search-icon {
-      position: absolute;
-      left: 11px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 15px;
-      pointer-events: none;
-    }
-    .search-input {
-      width: 100%;
-      border: 1.5px solid var(--pb);
-      border-radius: 10px;
-      padding: 10px 14px 10px 36px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 14px;
-      color: var(--tx);
-      outline: none;
-      transition: border-color .15s;
-    }
-    .search-input:focus { border-color: var(--p); }
-    .search-results {
-      display: none;
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0; right: 0;
-      background: #fff;
-      border: 1.5px solid var(--pb);
-      border-radius: 10px;
-      box-shadow: 0 8px 28px rgba(0,0,0,.1);
-      max-height: 230px;
-      overflow-y: auto;
-      z-index: 200;
-    }
-    .search-results.open { display: block; }
-    .r-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 9px 13px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--pb);
-      transition: background .1s;
-    }
-    .r-item:last-child { border-bottom: none; }
-    .r-item:hover { background: var(--pl); }
-    .r-badge {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 2px 5px;
-      border-radius: 5px;
-      flex-shrink: 0;
-      min-width: 32px;
-      text-align: center;
-    }
-    .r-info { flex: 1; min-width: 0; }
-    .r-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .r-sku  { font-size: 10px; color: var(--mu); }
-    .r-price { font-size: 13px; font-weight: 600; color: var(--p); flex-shrink: 0; }
-    .no-r { padding: 14px; text-align: center; font-size: 13px; color: var(--mu); }
+    /* ITEM CARDS */
+    #items-list { margin-top:9px; display:flex; flex-direction:column; gap:8px; }
+    .item-card { background:var(--pl); border:1px solid var(--pb); border-radius:10px; padding:9px 10px; }
+    .item-top { display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+    .item-name-input { flex:1; border:none; border-bottom:1.5px solid transparent; border-radius:0; background:transparent; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; color:var(--tx); outline:none; padding:2px 3px; min-width:0; transition:border-color .15s; }
+    .item-name-input:focus { border-bottom-color:var(--p); }
+    .item-name-input::placeholder { color:var(--mu); font-weight:400; }
+    .item-del { width:24px; height:24px; border-radius:50%; background:#fee2e2; color:#b91c1c; border:none; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 
-    /* Category colors */
-    .c-TAT { background:#ede9fe; color:#7c3aed; }
-    .c-PIR { background:#fce7f3; color:#be185d; }
-    .c-PAQ { background:#fff7ed; color:#c2410c; }
-    .c-PTN { background:#f0fdf4; color:#15803d; }
-    .c-HUG { background:#fef9c3; color:#92400e; }
-    .c-AFC { background:#ecfdf5; color:#065f46; }
-    .c-REP { background:#eff6ff; color:#1e40af; }
-    .c-RET { background:#f3e8ff; color:#6d28d9; }
-    .c-SRV { background:#e0f2fe; color:#0369a1; }
-    .c-DEF { background:#f3f4f6; color:#374151; }
+    /* perforación toggle */
+    .perfo-wrap { margin-bottom:7px; }
+    .perfo-toggle { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border:1.5px dashed var(--pb); border-radius:7px; background:transparent; cursor:pointer; font-size:11px; font-weight:500; color:var(--mu); transition:all .15s; font-family:'Poppins',sans-serif; }
+    .perfo-toggle.on { border-color:var(--p); background:var(--pl); color:var(--p); border-style:solid; }
+    .perfo-price { font-size:10px; }
 
-    /* ── ITEM ROWS ────────────────────────────────────────── */
-    #items-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .item-card {
-      background: var(--pl);
-      border: 1px solid var(--pb);
-      border-radius: 10px;
-      padding: 10px 11px;
-    }
-    .item-top {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 9px;
-    }
-    .item-name { flex: 1; font-size: 13px; font-weight: 500; line-height: 1.3; }
-    .item-name small { display: block; font-size: 10px; color: var(--mu); font-weight: 400; }
-    .item-del {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      background: #fee2e2;
-      color: #b91c1c;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      line-height: 1;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .item-controls {
-      display: grid;
-      grid-template-columns: auto auto auto 1fr;
-      gap: 8px;
-      align-items: end;
-    }
-    .ic-lbl { font-size: 9px; color: var(--mu); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+    /* item controls */
+    .item-controls { display:grid; grid-template-columns:auto auto 1fr auto; gap:7px; align-items:end; }
+    .ic-lbl { font-size:9px; color:var(--mu); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+    .qty-row { display:flex; align-items:center; gap:4px; }
+    .qty-btn { width:26px; height:26px; border-radius:6px; border:1.5px solid var(--pb); background:#fff; color:var(--p); font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .qty-val { min-width:16px; text-align:center; font-size:13px; font-weight:600; }
+    .mini-wrap { position:relative; }
+    .mini-wrap .sym { position:absolute; top:50%; transform:translateY(-50%); font-size:11px; color:var(--mu); pointer-events:none; }
+    .sym-l{left:6px;} .sym-r{right:6px;}
+    .mini-in { border:1.5px solid var(--pb); border-radius:7px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--tx); outline:none; background:#fff; padding:5px; transition:border-color .15s; -webkit-appearance:none; appearance:none; }
+    .mini-in:focus { border-color:var(--p); }
+    .mini-in.precio  { width:70px; padding-left:15px; }
+    .mini-in.promo   { width:56px; text-align:center; font-size:11px; }
+    .mini-in.importe { width:72px; padding-left:15px; font-weight:600; }
+    .mini-in.libre-sku { width:54px; font-size:11px; text-align:center; }
+    .ic-importe { text-align:right; }
 
-    /* qty */
-    .qty-row { display: flex; align-items: center; gap: 5px; }
-    .qty-btn {
-      width: 28px; height: 28px;
-      border-radius: 6px;
-      border: 1.5px solid var(--pb);
-      background: #fff;
-      color: var(--p);
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .qty-val { min-width: 18px; text-align: center; font-size: 14px; font-weight: 600; }
+    /* libre button */
+    .btn-libre { display:inline-flex; align-items:center; gap:5px; margin-top:9px; padding:6px 12px; border:1.5px dashed var(--pb); border-radius:8px; background:transparent; color:var(--mu); font-family:'Poppins',sans-serif; font-size:11px; font-weight:500; cursor:pointer; transition:all .15s; }
+    .btn-libre:hover { border-color:var(--p); color:var(--p); }
 
-    /* price & disc inputs */
-    .mini-input-wrap { position: relative; }
-    .mini-input-wrap .sym {
-      position: absolute;
-      top: 50%; transform: translateY(-50%);
-      font-size: 12px; color: var(--mu); pointer-events: none;
-    }
-    .sym-l { left: 7px; }
-    .sym-r { right: 7px; }
-    .mini-input {
-      border: 1.5px solid var(--pb);
-      border-radius: 7px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 13px;
-      color: var(--tx);
-      outline: none;
-      background: #fff;
-      padding: 5px 6px;
-      transition: border-color .15s;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    .mini-input:focus { border-color: var(--p); }
-    .mini-input.price { width: 76px; padding-left: 17px; }
-    .mini-input.disc  { width: 50px; padding-right: 18px; }
+    /* PAGOS */
+    .pago-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+    .pago-btn { padding:8px 4px; border:2px solid var(--pb); border-radius:10px; background:#fff; font-family:'Poppins',sans-serif; font-size:11px; font-weight:500; color:var(--mu); cursor:pointer; text-align:center; transition:all .15s; }
+    .pago-btn.active { border-color:var(--p); background:var(--pl); color:var(--p); font-weight:700; }
+    #pagos-montos { margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+    .pago-monto-row { display:flex; align-items:center; justify-content:space-between; }
+    .pago-monto-lbl { font-size:12px; color:var(--tx); font-weight:500; }
+    .pago-suma { font-size:11px; margin-top:4px; text-align:right; }
+    .pago-suma.ok { color:#15803d; } .pago-suma.mal { color:#b91c1c; }
 
-    /* importe */
-    .importe-col { text-align: right; }
-    .importe-val { font-size: 15px; font-weight: 700; color: var(--p); }
+    /* COMENTARIOS */
+    textarea { width:100%; border:1.5px solid var(--pb); border-radius:8px; padding:8px 10px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--tx); resize:none; outline:none; min-height:56px; transition:border-color .15s; }
+    textarea:focus { border-color:var(--p); }
 
-    /* ── TIPO DE PAGO ─────────────────────────────────────── */
-    .pago-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .pago-btn {
-      padding: 9px 4px;
-      border: 2px solid var(--pb);
-      border-radius: 10px;
-      background: #fff;
-      font-family: 'Poppins', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--mu);
-      cursor: pointer;
-      text-align: center;
-      transition: all .15s;
-    }
-    .pago-btn.active { border-color: var(--p); background: var(--pl); color: var(--p); font-weight: 700; }
+    /* TOTAL */
+    .total-bar { display:flex; justify-content:space-between; align-items:center; padding:13px 16px; background:var(--pl); border-top:2px solid var(--pb); }
+    .total-lbl { font-size:11px; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.8px; }
+    .total-val { font-size:26px; font-weight:700; color:var(--p); }
 
-    /* ── COMENTARIOS ──────────────────────────────────────── */
-    textarea {
-      width: 100%;
-      border: 1.5px solid var(--pb);
-      border-radius: 8px;
-      padding: 9px 11px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 13px;
-      color: var(--tx);
-      resize: none;
-      outline: none;
-      min-height: 60px;
-      transition: border-color .15s;
-    }
-    textarea:focus { border-color: var(--p); }
+    /* SUBMIT */
+    #btn-submit { display:block; width:100%; padding:15px; background:linear-gradient(135deg,var(--p),var(--pm)); color:#fff; border:none; border-radius:0 0 20px 20px; font-family:'Poppins',sans-serif; font-size:15px; font-weight:700; cursor:pointer; letter-spacing:.3px; transition:opacity .2s; }
+    #btn-submit:hover { opacity:.88; }
+    #btn-submit:disabled { opacity:.5; cursor:not-allowed; }
 
-    /* ── TOTAL ────────────────────────────────────────────── */
-    .total-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 18px;
-      background: var(--pl);
-      border-top: 2px solid var(--pb);
-    }
-    .total-lbl { font-size: 11px; font-weight: 600; color: var(--mu); text-transform: uppercase; letter-spacing: .8px; }
-    .total-val { font-size: 28px; font-weight: 700; color: var(--p); }
+    /* SUCCESS OVERLAY */
+    #success-overlay { display:none; position:fixed; inset:0; background:rgba(253,242,248,.96); z-index:500; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+    .success-card { background:#fff; border-radius:20px; padding:40px 24px; text-align:center; max-width:380px; width:100%; box-shadow:0 4px 32px rgba(190,24,93,.15); }
+    .success-icon { font-size:56px; margin-bottom:12px; }
+    .success-nota { font-size:28px; font-weight:700; color:var(--p); margin-bottom:6px; }
+    .success-sub  { font-size:13px; color:var(--mu); line-height:1.6; margin-bottom:24px; white-space:pre-line; }
+    .success-btns { display:flex; flex-direction:column; gap:8px; }
+    .btn-nueva  { padding:12px 24px; background:linear-gradient(135deg,var(--p),var(--pm)); color:#fff; border:none; border-radius:10px; font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
+    .btn-volver { padding:10px 24px; background:var(--pl); color:var(--p); border:2px solid var(--pb); border-radius:10px; font-family:'Poppins',sans-serif; font-size:13px; font-weight:500; cursor:pointer; }
 
-    /* ── SUBMIT ───────────────────────────────────────────── */
-    #btn-submit {
-      display: block;
-      width: 100%;
-      padding: 17px;
-      background: linear-gradient(135deg, var(--p), var(--pm));
-      color: #fff;
-      border: none;
-      border-radius: 0 0 20px 20px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: .3px;
-      transition: opacity .2s;
-    }
-    #btn-submit:hover { opacity: .88; }
-    #btn-submit:disabled { opacity: .5; cursor: not-allowed; }
-
-    /* ── SUCCESS ──────────────────────────────────────────── */
-    #success-screen {
-      display: none;
-      max-width: 480px;
-      margin: 0 auto;
-    }
-    .success-card {
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 4px 32px rgba(190,24,93,.12);
-      padding: 48px 24px;
-      text-align: center;
-    }
-    .success-icon { font-size: 60px; margin-bottom: 12px; }
-    .success-nota { font-size: 30px; font-weight: 700; color: var(--p); margin-bottom: 6px; }
-    .success-sub  { font-size: 13px; color: var(--mu); line-height: 1.6; margin-bottom: 28px; }
-    .btn-nueva {
-      padding: 12px 32px;
-      background: var(--pl);
-      color: var(--p);
-      border: 2px solid var(--pb);
-      border-radius: 10px;
-      font-family: 'Poppins', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    /* ── TOAST ────────────────────────────────────────────── */
-    #toast {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1f2937;
-      color: #fff;
-      padding: 11px 22px;
-      border-radius: 10px;
-      font-size: 13px;
-      z-index: 999;
-      max-width: calc(100vw - 32px);
-      text-align: center;
-      white-space: pre-line;
-    }
+    /* TOAST */
+    #toast { display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1f2937; color:#fff; padding:10px 20px; border-radius:10px; font-size:12px; z-index:999; max-width:calc(100vw - 32px); text-align:center; white-space:pre-line; }
   </style>
 </head>
 <body>
 
-<!-- ══ LOADING ══════════════════════════════════════════════ -->
+<div id="tab-bar-wrap">
+  <div id="tab-bar"></div>
+  <button id="add-tab-btn" onclick="addTab()" title="Nueva nota">+</button>
+</div>
+
 <div id="loading-screen">
   <div class="spinner"></div>
   <p style="color:var(--mu);font-size:13px;">Cargando catálogo...</p>
 </div>
 
-<!-- ══ FORM ═════════════════════════════════════════════════ -->
-<div id="form-screen" style="display:none;">
-  <div class="card">
-
-    <!-- HEADER -->
-    <div class="nota-header">
-      <div class="logo">yiyi pash
-        <small>@yiyi_pash · 56 19 37 05 69</small>
-      </div>
-      <div class="nota-num-box">
-        <div class="lbl">Nº</div>
-        <div class="val">——</div>
-      </div>
+<div id="form-screen" style="display:none">
+<div class="card">
+  <div class="nota-header">
+    <div class="logo">yiyi pash<small>@yiyi_pash · 56 19 37 05 69</small></div>
+    <div class="nota-ref">
+      <div class="lbl">Borrador</div>
+      <div class="val" id="header-ref">——</div>
     </div>
+  </div>
 
-    <!-- LUGAR + FECHA -->
-    <div class="section">
-      <div class="row2">
-        <div class="field">
-          <label>Lugar</label>
-          <select id="punto-venta">
-            <option value="">Cargando...</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Fecha</label>
-          <input type="date" id="fecha">
-        </div>
-      </div>
-    </div>
-
-    <!-- ARTISTA + CLIENTA -->
-    <div class="section">
-      <div class="field" style="margin-bottom:10px;">
-        <label>Artista</label>
-        <select id="artista">
-          <option value="">Cargando...</option>
-        </select>
-      </div>
-      <div class="row2">
-        <div class="field">
-          <label>Nombre clienta</label>
-          <input type="text" id="nombre-clienta" placeholder="Nombre...">
-        </div>
-        <div class="field">
-          <label>Email (opcional)</label>
-          <input type="email" id="email-clienta" placeholder="correo@...">
-        </div>
-      </div>
-    </div>
-
-    <!-- ÍTEMS -->
-    <div class="section">
-      <div class="items-lbl">Servicios y productos</div>
-
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="search-input"
-          placeholder="Busca: pieza top, piercing, huggie..."
-          autocomplete="off" autocorrect="off" spellcheck="false">
-        <div class="search-results" id="search-results"></div>
-      </div>
-
-      <div id="items-list"></div>
-    </div>
-
-    <!-- TIPO DE PAGO + COMENTARIOS -->
-    <div class="section">
-      <div class="field" style="margin-bottom:12px;">
-        <label>Tipo de pago</label>
-        <div class="pago-grid">
-          <button class="pago-btn" data-pago="Efectivo"      onclick="selPago(this)">💵 Efectivo</button>
-          <button class="pago-btn" data-pago="Transferencia" onclick="selPago(this)">📲 Transf.</button>
-          <button class="pago-btn" data-pago="Tarjeta"       onclick="selPago(this)">💳 Tarjeta</button>
-        </div>
+  <div class="section">
+    <div class="row2">
+      <div class="field">
+        <label>Lugar</label>
+        <select id="punto-venta" onchange="saveField('punto_venta',this.value)"><option value="">Cargando...</option></select>
       </div>
       <div class="field">
-        <label>Comentarios</label>
-        <textarea id="comentarios" placeholder="Anticipo, notas especiales..."></textarea>
+        <label>Fecha</label>
+        <input type="date" id="fecha" onchange="saveField('fecha',this.value)">
       </div>
     </div>
+  </div>
 
-    <!-- TOTAL -->
-    <div class="total-bar">
-      <span class="total-lbl">Total</span>
-      <span class="total-val" id="total-display">$0</span>
+  <div class="section">
+    <div class="field" style="margin-bottom:9px;">
+      <label>Artista</label>
+      <select id="artista" onchange="saveField('artista',this.value)"><option value="">Cargando...</option></select>
     </div>
+    <div class="row2">
+      <div class="field">
+        <label>Nombre clienta</label>
+        <input type="text" id="nombre-clienta" placeholder="Nombre..." oninput="onNombre(this.value)">
+      </div>
+      <div class="field">
+        <label>Email (opcional)</label>
+        <input type="email" id="email-clienta" placeholder="correo@..." onchange="saveField('email_clienta',this.value)">
+      </div>
+    </div>
+  </div>
 
-    <!-- SUBMIT -->
-    <button id="btn-submit" onclick="enviarNota()">Registrar Nota ✨</button>
+  <div class="section">
+    <div class="items-lbl">Servicios y productos</div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="search-input" placeholder="Busca: top, piercing, huggie..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="search-results" id="search-results"></div>
+    </div>
+    <div id="items-list"></div>
+    <button class="btn-libre" onclick="addItemLibre()">＋ Ítem libre</button>
+  </div>
 
-  </div><!-- /card -->
-</div><!-- /form-screen -->
+  <div class="section">
+    <div class="field" style="margin-bottom:11px;">
+      <label>Tipo de pago</label>
+      <div class="pago-grid">
+        <button class="pago-btn" data-pago="Efectivo"      onclick="togglePago(this)">💵 Efectivo</button>
+        <button class="pago-btn" data-pago="Transferencia" onclick="togglePago(this)">📲 Transf.</button>
+        <button class="pago-btn" data-pago="Tarjeta"       onclick="togglePago(this)">💳 Tarjeta</button>
+      </div>
+      <div id="pagos-montos"></div>
+    </div>
+    <div class="field">
+      <label>Comentarios</label>
+      <textarea id="comentarios" placeholder="Notas especiales..." onchange="saveField('comentarios',this.value)"></textarea>
+    </div>
+  </div>
 
-<!-- ══ SUCCESS ═══════════════════════════════════════════════ -->
-<div id="success-screen">
+  <div class="total-bar">
+    <span class="total-lbl">Total</span>
+    <span class="total-val" id="total-display">$0</span>
+  </div>
+  <button id="btn-submit" onclick="enviarNota()">Registrar Nota ✨</button>
+</div>
+</div>
+
+<div id="success-overlay">
   <div class="success-card">
     <div class="success-icon">✨</div>
     <div class="success-nota" id="s-nota">D-0000</div>
-    <div class="success-sub"  id="s-msg">Registrada correctamente.</div>
-    <button class="btn-nueva" onclick="nuevaNota()">+ Nueva nota</button>
+    <div class="success-sub"  id="s-msg"></div>
+    <div class="success-btns">
+      <button class="btn-nueva"  onclick="nuevaNota()">+ Nueva nota</button>
+      <button class="btn-volver" onclick="cerrarExito()">Volver a las notas</button>
+    </div>
   </div>
 </div>
 
-<!-- ══ TOAST ═════════════════════════════════════════════════ -->
 <div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════════
-//  ① CONFIG — pega aquí la URL de tu Apps Script desplegado
-// ══════════════════════════════════════════════════════════════
+// CONFIG
 const AS_URL = 'https://script.google.com/macros/s/AKfycbxmIN11GJquYJ6lR8tGxB3KJPhkL64e8KPKpQmPWdAMfoiX43UQ1bZryCRvHhXKkSPw/exec';
 
-// ══════════════════════════════════════════════════════════════
-//  ② ESTADO
-// ══════════════════════════════════════════════════════════════
-let catalogo       = [];
-let currentResults = [];
-let items          = [];
-let tipoPago       = null;
-let nextLocalId    = 1;
+// ESTADO GLOBAL
+let catalogo = [], currentResults = [], tabs = [], activeTabId = 0, _nextTabId = 1, _nextItemId = 1;
 
-// ══════════════════════════════════════════════════════════════
-//  ③ INIT
-// ══════════════════════════════════════════════════════════════
-async function init() {
-  // Fecha de hoy
+// TAB — crear
+function crearTab() {
   const hoy = new Date();
-  document.getElementById('fecha').value =
-    `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`;
+  const tab = {
+    id: _nextTabId++, label: `Nota ${_nextTabId - 1}`,
+    items: [], pagosActivos: [], pagosMontos: { Efectivo:0, Transferencia:0, Tarjeta:0 },
+    form: {
+      punto_venta: localStorage.getItem('yp_lugar') || '',
+      fecha: `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`,
+      artista: localStorage.getItem('yp_artista') || '',
+      nombre_clienta:'', email_clienta:'', comentarios:'',
+    },
+  };
+  tabs.push(tab); return tab;
+}
+function getTab()   { return tabs.find(t => t.id === activeTabId); }
+function getItems() { return getTab()?.items || []; }
 
-  // Recordar último artista y lugar
-  const lastArtista = localStorage.getItem('yp_artista');
-  const lastLugar   = localStorage.getItem('yp_lugar');
-  if (lastArtista) document.getElementById('artista').value       = lastArtista;
-  if (lastLugar)   document.getElementById('punto-venta').value   = lastLugar;
+// TAB — guardar/cargar
+function saveCurrentForm() {
+  const tab = getTab(); if (!tab) return;
+  tab.form.punto_venta    = document.getElementById('punto-venta').value;
+  tab.form.fecha          = document.getElementById('fecha').value;
+  tab.form.artista        = document.getElementById('artista').value;
+  tab.form.nombre_clienta = document.getElementById('nombre-clienta').value;
+  tab.form.email_clienta  = document.getElementById('email-clienta').value;
+  tab.form.comentarios    = document.getElementById('comentarios').value;
+}
+function saveField(key, val) { const tab = getTab(); if (tab) tab.form[key] = val; }
 
-  // Cargar catálogo + puntos de venta + colaboradores (un solo request)
+function loadTabForm(tab) {
+  document.getElementById('punto-venta').value    = tab.form.punto_venta;
+  document.getElementById('fecha').value          = tab.form.fecha;
+  document.getElementById('artista').value        = tab.form.artista;
+  document.getElementById('nombre-clienta').value = tab.form.nombre_clienta;
+  document.getElementById('email-clienta').value  = tab.form.email_clienta;
+  document.getElementById('comentarios').value    = tab.form.comentarios;
+  renderItems(); renderPagoButtons(); renderPagoMontos(); updateTotal(); renderTabBar();
+}
+
+// TAB — operaciones
+function addTab() { saveCurrentForm(); const tab = crearTab(); activeTabId = tab.id; loadTabForm(tab); }
+
+function switchTab(id) {
+  if (id === activeTabId) return;
+  saveCurrentForm(); activeTabId = id; loadTabForm(getTab());
+}
+
+function closeTab(id) {
+  const tab = tabs.find(t => t.id === id); if (!tab) return;
+  if (tab.items.length > 0 && !confirm(`¿Cerrar "${tab.label}"?\nSe perderán los ítems sin registrar.`)) return;
+  tabs = tabs.filter(t => t.id !== id);
+  if (tabs.length === 0) { const t = crearTab(); activeTabId = t.id; loadTabForm(t); }
+  else if (activeTabId === id) { activeTabId = tabs[tabs.length-1].id; loadTabForm(getTab()); }
+  else { renderTabBar(); }
+}
+
+function renderTabBar() {
+  document.getElementById('tab-bar').innerHTML = tabs.map(tab =>
+    `<div class="tab ${tab.id===activeTabId?'active':''}" onclick="switchTab(${tab.id})">
+      <span class="tab-name">${esc(tab.label)}</span>
+      <span class="tab-x" onclick="event.stopPropagation();closeTab(${tab.id})">×</span>
+    </div>`).join('');
+  const ref = document.getElementById('header-ref');
+  if (ref) ref.textContent = getTab()?.label || '——';
+}
+
+// INIT
+async function init() {
+  const tab = crearTab(); activeTabId = tab.id;
   try {
-    const res  = await fetch(`${AS_URL}?action=catalogo`);
+    const res = await fetch(`${AS_URL}?action=catalogo`);
     const json = await res.json();
     if (json.ok) {
       catalogo = json.data.catalogo || [];
       poblarLugares(json.data.puntos_venta || []);
       poblarArtistas(json.data.colaboradores || []);
-    } else {
-      toast('⚠️ Error al cargar: ' + (json.error || 'error desconocido'));
-      poblarFallback(); // opciones mínimas en caso de fallo
-    }
-  } catch (e) {
-    toast('⚠️ Sin conexión — verifica internet');
-    poblarFallback();
-  }
-
+    } else { toast('⚠️ ' + (json.error||'Error al cargar')); poblarFallback(); }
+  } catch { toast('⚠️ Sin conexión'); poblarFallback(); }
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('form-screen').style.display    = 'block';
-
-  // Bind search
+  loadTabForm(tab);
   const inp = document.getElementById('search-input');
-  inp.addEventListener('input',  onSearch);
-  inp.addEventListener('focus',  () => { if (inp.value.length >= 2) onSearch(); });
-  inp.addEventListener('blur',   () => setTimeout(closeSearch, 160));
-
-  // Cerrar search al hacer tap fuera
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-wrap')) closeSearch();
-  });
+  inp.addEventListener('input', onSearch);
+  inp.addEventListener('focus', () => { if (inp.value.length >= 2) onSearch(); });
+  inp.addEventListener('blur',  () => setTimeout(closeSearch, 160));
+  document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) closeSearch(); });
 }
 
-// ══════════════════════════════════════════════════════════════
-//  ④ BÚSQUEDA
-// ══════════════════════════════════════════════════════════════
+// BÚSQUEDA
 function onSearch() {
-  const q   = document.getElementById('search-input').value.trim();
-  const res = document.getElementById('search-results');
+  const q = document.getElementById('search-input').value.trim();
   if (q.length < 2) { closeSearch(); return; }
   currentResults = buscar(q);
   renderResults();
-  res.classList.add('open');
+  document.getElementById('search-results').classList.add('open');
 }
-
 function buscar(q) {
   const tokens = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\s+/).filter(Boolean);
   return catalogo.filter(item => {
-    const hay = `${item.sku} ${item.nombre} ${item.categoria}`.toLowerCase()
-                  .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const hay = `${item.sku} ${item.nombre} ${item.categoria}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     return tokens.every(t => hay.includes(t));
   }).slice(0, 8);
 }
-
 function renderResults() {
   const el = document.getElementById('search-results');
-  if (!currentResults.length) {
-    el.innerHTML = '<div class="no-r">Sin resultados — intenta con otra palabra</div>';
-    return;
-  }
+  if (!currentResults.length) { el.innerHTML='<div class="no-r">Sin resultados</div>'; return; }
   el.innerHTML = currentResults.map((item, idx) => {
-    const badge = getBadge(item);
-    const precio = item.precio ? `$${fmtN(item.precio)}` : '—';
+    const b = getBadge(item);
+    const sv = item.servicio ? ` <span style="font-size:9px;color:var(--p);">+ perforación</span>` : '';
     return `<div class="r-item" onmousedown="addItem(${idx})">
-      <span class="r-badge ${badge.cls}">${badge.txt}</span>
-      <div class="r-info">
-        <div class="r-name">${esc(item.nombre)}</div>
-        <div class="r-sku">${esc(item.sku)}</div>
-      </div>
-      <span class="r-price">${precio}</span>
+      <span class="r-badge ${b.cls}">${b.txt}</span>
+      <div class="r-info"><div class="r-name">${esc(item.nombre)}${sv}</div><div class="r-sku">${esc(item.sku)}</div></div>
+      <span class="r-price">${item.precio ? '$'+fmtN(item.precio) : '—'}</span>
     </div>`;
   }).join('');
 }
+function closeSearch() { document.getElementById('search-results').classList.remove('open'); }
 
-function closeSearch() {
-  document.getElementById('search-results').classList.remove('open');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  ⑤ ÍTEMS
-// ══════════════════════════════════════════════════════════════
+// ÍTEMS — agregar
 function addItem(idx) {
-  const src = currentResults[idx];
-  if (!src) return;
-  items.push({
-    id:          nextLocalId++,
-    sku:         src.sku,
-    descripcion: src.nombre,
-    categoria:   src.categoria,
-    precio:      src.precio || 0,
-    cantidad:    1,
-    descuento:   0,
-    importe:     src.precio || 0,
+  const src = currentResults[idx]; if (!src) return;
+  const srv = src.servicio || null;
+  getTab().items.push({
+    id:_nextItemId++, sku:src.sku, sku_serv:srv?srv.sku:null,
+    descripcion:src.nombre, desc_custom:false, nombre_prod:src.nombre,
+    precio_prod:src.precio, precio_serv:srv?srv.precio:0, precio:src.precio,
+    cantidad:1, promo:'', importe:src.precio,
+    con_servicio:false, tiene_serv:!!srv, categoria:src.categoria, es_libre:false,
   });
-  document.getElementById('search-input').value = '';
-  closeSearch();
-  renderItems();
+  document.getElementById('search-input').value = ''; closeSearch(); renderItems();
 }
 
-function removeItem(id) {
-  items = items.filter(i => i.id !== id);
+function addItemLibre() {
+  getTab().items.push({
+    id:_nextItemId++, sku:'', sku_serv:null, descripcion:'', desc_custom:true,
+    nombre_prod:'', precio_prod:0, precio_serv:0, precio:0,
+    cantidad:1, promo:'', importe:0, con_servicio:false, tiene_serv:false, categoria:'', es_libre:true,
+  });
   renderItems();
+  setTimeout(() => { const ins=document.querySelectorAll('.item-name-input'); if(ins.length) ins[ins.length-1].focus(); }, 50);
 }
+
+// ÍTEMS — operaciones
+function removeItem(id)   { const t=getTab(); t.items=t.items.filter(i=>i.id!==id); renderItems(); }
+
+function toggleServicio(id) {
+  const item = getTab().items.find(i=>i.id===id); if(!item||!item.tiene_serv) return;
+  item.con_servicio = !item.con_servicio;
+  if (!item.desc_custom) item.descripcion = item.con_servicio ? 'Piercing '+item.nombre_prod : item.nombre_prod;
+  item.precio = item.con_servicio ? item.precio_prod + item.precio_serv : item.precio_prod;
+  recalcImporte(item); renderItems();
+}
+
+function onDescripcion(id, val) { const i=getTab().items.find(i=>i.id===id); if(i){i.descripcion=val;i.desc_custom=true;} }
+function onSku(id, val)         { const i=getTab().items.find(i=>i.id===id); if(i) i.sku=val; }
+function onPromo(id, val)       { const i=getTab().items.find(i=>i.id===id); if(i) i.promo=val; }
 
 function stepCantidad(id, delta) {
-  const item = items.find(i => i.id === id);
-  if (!item) return;
-  item.cantidad = Math.max(1, item.cantidad + delta);
-  recalc(item);
-  renderItems();
+  const item=getTab().items.find(i=>i.id===id); if(!item) return;
+  item.cantidad=Math.max(1,item.cantidad+delta); recalcImporte(item); renderItems();
 }
 
 function onPrecio(id, val) {
-  const item = items.find(i => i.id === id);
-  if (!item) return;
-  item.precio = parseFloat(val) || 0;
-  recalc(item);
-  updateImporteEl(id, item.importe);
+  const item=getTab().items.find(i=>i.id===id); if(!item) return;
+  item.precio=parseFloat(val)||0; if(item.es_libre) item.precio_prod=item.precio;
+  recalcImporte(item);
+  const el=document.querySelector(`[data-id="${id}"] .importe-input`); if(el) el.value=item.importe;
   updateTotal();
 }
 
-function onDescuento(id, val) {
-  const item = items.find(i => i.id === id);
-  if (!item) return;
-  item.descuento = Math.min(100, Math.max(0, parseFloat(val) || 0));
-  recalc(item);
-  updateImporteEl(id, item.importe);
-  updateTotal();
+function onImporte(id, val) {
+  const item=getTab().items.find(i=>i.id===id); if(!item) return;
+  item.importe=parseFloat(val)||0; updateTotal();
 }
 
-function recalc(item) {
-  item.importe = Math.round(item.precio * item.cantidad * (1 - item.descuento / 100) * 100) / 100;
-}
+function recalcImporte(item) { item.importe=Math.round(item.precio*item.cantidad*100)/100; }
+function calcTotal()         { return getItems().reduce((s,i)=>s+i.importe,0); }
+function updateTotal()       { document.getElementById('total-display').textContent=`$${fmtN(calcTotal())}`; renderSumaPagos(); }
 
-function updateImporteEl(id, val) {
-  const el = document.querySelector(`[data-id="${id}"] .importe-val`);
-  if (el) el.textContent = `$${fmtN(val)}`;
-}
-
-function calcTotal() {
-  return items.reduce((s, i) => s + i.importe, 0);
-}
-
-function updateTotal() {
-  document.getElementById('total-display').textContent = `$${fmtN(calcTotal())}`;
-}
-
+// ÍTEMS — render
 function renderItems() {
-  const el = document.getElementById('items-list');
-  if (!items.length) { el.innerHTML = ''; updateTotal(); return; }
-
+  const el=document.getElementById('items-list'), items=getItems();
+  if (!items.length) { el.innerHTML=''; updateTotal(); return; }
   el.innerHTML = items.map(item => {
-    const badge = getBadge(item);
-    return `
-    <div class="item-card" data-id="${item.id}">
+    const b = getBadge(item);
+    const topLeft = item.es_libre
+      ? `<input class="mini-in libre-sku" type="text" placeholder="SKU" value="${esc(item.sku)}" oninput="onSku(${item.id},this.value)">`
+      : `<span class="r-badge ${b.cls}">${b.txt}</span>`;
+    const perfoHtml = item.tiene_serv ? `
+      <div class="perfo-wrap">
+        <button class="perfo-toggle ${item.con_servicio?'on':''}" onclick="toggleServicio(${item.id})">
+          <span>${item.con_servicio?'🔩':'○'}</span>
+          <span>${item.con_servicio?'Perforación incluida':'+ Incluir perforación'}</span>
+          <span class="perfo-price">+$${fmtN(item.precio_serv)}</span>
+        </button>
+      </div>` : '';
+    return `<div class="item-card" data-id="${item.id}">
       <div class="item-top">
-        <span class="r-badge ${badge.cls}">${badge.txt}</span>
-        <span class="item-name">${esc(item.descripcion)}<small>${esc(item.sku)}</small></span>
+        ${topLeft}
+        <input class="item-name-input" type="text" value="${esc(item.descripcion)}"
+          placeholder="Descripción del concepto..." oninput="onDescripcion(${item.id},this.value)">
         <button class="item-del" onclick="removeItem(${item.id})">×</button>
       </div>
+      ${perfoHtml}
       <div class="item-controls">
-        <div>
-          <div class="ic-lbl">Precio</div>
-          <div class="mini-input-wrap">
-            <span class="sym sym-l">$</span>
-            <input class="mini-input price" type="number" inputmode="decimal"
-              value="${item.precio}" min="0" step="1"
-              oninput="onPrecio(${item.id}, this.value)">
-          </div>
+        <div><div class="ic-lbl">Precio</div><div class="mini-wrap"><span class="sym sym-l">$</span>
+          <input class="mini-in precio" type="number" inputmode="decimal" value="${item.precio}" min="0" step="1" oninput="onPrecio(${item.id},this.value)">
+        </div></div>
+        <div><div class="ic-lbl">Cantidad</div><div class="qty-row">
+          <button class="qty-btn" onclick="stepCantidad(${item.id},-1)">−</button>
+          <span class="qty-val">${item.cantidad}</span>
+          <button class="qty-btn" onclick="stepCantidad(${item.id},+1)">+</button>
+        </div></div>
+        <div><div class="ic-lbl">Promo</div>
+          <input class="mini-in promo" type="text" maxlength="10" value="${esc(item.promo)}" placeholder="4x2..." oninput="onPromo(${item.id},this.value)">
         </div>
-        <div>
-          <div class="ic-lbl">Cantidad</div>
-          <div class="qty-row">
-            <button class="qty-btn" onclick="stepCantidad(${item.id}, -1)">−</button>
-            <span class="qty-val">${item.cantidad}</span>
-            <button class="qty-btn" onclick="stepCantidad(${item.id}, +1)">+</button>
-          </div>
-        </div>
-        <div>
-          <div class="ic-lbl">Desc.</div>
-          <div class="mini-input-wrap">
-            <input class="mini-input disc" type="number" inputmode="decimal"
-              value="${item.descuento}" min="0" max="100" step="1"
-              oninput="onDescuento(${item.id}, this.value)">
-            <span class="sym sym-r">%</span>
-          </div>
-        </div>
-        <div class="importe-col">
-          <div class="ic-lbl">Importe</div>
-          <div class="importe-val">$${fmtN(item.importe)}</div>
-        </div>
+        <div class="ic-importe"><div class="ic-lbl">Importe</div><div class="mini-wrap"><span class="sym sym-l">$</span>
+          <input class="mini-in importe importe-input" type="number" inputmode="decimal" value="${item.importe}" min="0" step="1" oninput="onImporte(${item.id},this.value)">
+        </div></div>
       </div>
     </div>`;
   }).join('');
-
   updateTotal();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  ⑥ PAGO
-// ══════════════════════════════════════════════════════════════
-function selPago(btn) {
-  document.querySelectorAll('.pago-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  tipoPago = btn.dataset.pago;
+// PAGOS
+function togglePago(btn) {
+  const tipo=btn.dataset.pago, tab=getTab(), idx=tab.pagosActivos.indexOf(tipo);
+  if (idx>=0) { tab.pagosActivos.splice(idx,1); tab.pagosMontos[tipo]=0; }
+  else { tab.pagosActivos.push(tipo); }
+  renderPagoButtons(); renderPagoMontos();
+}
+function renderPagoButtons() {
+  const tab=getTab();
+  document.querySelectorAll('.pago-btn').forEach(b=>b.classList.toggle('active',tab.pagosActivos.includes(b.dataset.pago)));
+}
+function renderPagoMontos() {
+  const tab=getTab(), el=document.getElementById('pagos-montos');
+  if (tab.pagosActivos.length<=1) { el.innerHTML=''; return; }
+  el.innerHTML = tab.pagosActivos.map(tipo=>`
+    <div class="pago-monto-row">
+      <span class="pago-monto-lbl">${tipo}</span>
+      <div class="mini-wrap"><span class="sym sym-l">$</span>
+        <input class="mini-in precio" type="number" inputmode="decimal"
+          value="${tab.pagosMontos[tipo]||''}" placeholder="0" oninput="onPagoMonto('${tipo}',this.value)">
+      </div>
+    </div>`).join('') + `<div class="pago-suma" id="pago-suma-lbl"></div>`;
+  renderSumaPagos();
+}
+function onPagoMonto(tipo, val) { const tab=getTab(); tab.pagosMontos[tipo]=parseFloat(val)||0; renderSumaPagos(); }
+function renderSumaPagos() {
+  const tab=getTab(), el=document.getElementById('pago-suma-lbl');
+  if (!el||tab.pagosActivos.length<=1) return;
+  const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0), total=calcTotal();
+  if (Math.abs(suma-total)<0.5) { el.className='pago-suma ok'; el.textContent=`✅ Suma correcta ($${fmtN(suma)})`; }
+  else { el.className='pago-suma mal'; el.textContent=`⚠️ Suma: $${fmtN(suma)} · Diferencia: $${fmtN(total-suma)}`; }
+}
+function getPagosPayload() {
+  const tab=getTab(), total=calcTotal();
+  if (tab.pagosActivos.length===1) return [{tipo:tab.pagosActivos[0], monto:total}];
+  return tab.pagosActivos.map(tipo=>({tipo, monto:tab.pagosMontos[tipo]||0}));
 }
 
-// ══════════════════════════════════════════════════════════════
-//  ⑦ ENVIAR
-// ══════════════════════════════════════════════════════════════
+// ENVIAR
 async function enviarNota() {
-  const pv    = document.getElementById('punto-venta').value;
-  const fecha = document.getElementById('fecha').value;
-  const art   = document.getElementById('artista').value;
-  const nom   = document.getElementById('nombre-clienta').value.trim();
-  const email = document.getElementById('email-clienta').value.trim();
-  const com   = document.getElementById('comentarios').value.trim();
-
-  if (!pv)            return toast('⚠️ Selecciona el lugar');
-  if (!fecha)         return toast('⚠️ Pon la fecha');
-  if (!art)           return toast('⚠️ Selecciona el artista');
-  if (!nom)           return toast('⚠️ Escribe el nombre de la clienta');
-  if (!items.length)  return toast('⚠️ Agrega al menos un servicio o producto');
-  if (!tipoPago)      return toast('⚠️ Selecciona el tipo de pago');
-
-  localStorage.setItem('yp_artista', art);
-  localStorage.setItem('yp_lugar',   pv);
-
-  const payload = {
-    fecha,
-    punto_venta    : pv,
-    artista        : art,
-    nombre_clienta : nom,
-    email_clienta  : email,
-    items          : items.map(i => ({
-      sku         : i.sku,
-      descripcion : i.descripcion,
-      cantidad    : i.cantidad,
-      precio      : i.precio,
-      descuento   : i.descuento,
-      importe     : i.importe,
-    })),
-    total       : calcTotal(),
-    tipo_pago   : tipoPago,
-    comentarios : com || '-',
-  };
-
-  const btn = document.getElementById('btn-submit');
-  btn.disabled    = true;
-  btn.textContent = 'Enviando...';
-
-  try {
-    const res  = await fetch(AS_URL, {
-      method  : 'POST',
-      headers : { 'Content-Type': 'text/plain' },
-      body    : JSON.stringify(payload),
-      redirect: 'follow',
-    });
-    const json = await res.json();
-    if (json.ok) {
-      mostrarExito(json.data.nota, email);
-    } else {
-      throw new Error(json.error || 'Error desconocido del servidor');
-    }
-  } catch (e) {
-    toast('❌ Error: ' + e.message);
-  } finally {
-    btn.disabled    = false;
-    btn.textContent = 'Registrar Nota ✨';
+  saveCurrentForm();
+  const tab=getTab(), form=tab.form;
+  if (!form.punto_venta)         return toast('⚠️ Selecciona el lugar');
+  if (!form.fecha)               return toast('⚠️ Pon la fecha');
+  if (!form.artista)             return toast('⚠️ Selecciona el artista');
+  if (!form.nombre_clienta.trim()) return toast('⚠️ Escribe el nombre de la clienta');
+  if (!tab.items.length)         return toast('⚠️ Agrega al menos un servicio o producto');
+  if (!tab.pagosActivos.length)  return toast('⚠️ Selecciona el tipo de pago');
+  if (tab.pagosActivos.length>1) {
+    const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0), total=calcTotal();
+    if (Math.abs(suma-total)>0.5) return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el total ($${fmtN(total)})`);
   }
+  localStorage.setItem('yp_artista',form.artista); localStorage.setItem('yp_lugar',form.punto_venta);
+  const payload = {
+    fecha:form.fecha, punto_venta:form.punto_venta, artista:form.artista,
+    nombre_clienta:form.nombre_clienta.trim(), email_clienta:form.email_clienta.trim(),
+    items:tab.items.map(i=>({
+      sku:i.sku, sku_serv:i.con_servicio?i.sku_serv:null,
+      descripcion:i.descripcion||i.nombre_prod||'-', con_servicio:i.con_servicio,
+      cantidad:i.cantidad, precio_prod:i.precio_prod, precio_serv:i.con_servicio?i.precio_serv:0,
+      precio:i.precio, promo:i.promo, importe:i.importe,
+    })),
+    total:calcTotal(), pagos:getPagosPayload(), comentarios:form.comentarios||'-',
+  };
+  const btn=document.getElementById('btn-submit');
+  btn.disabled=true; btn.textContent='Enviando...';
+  try {
+    const res=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload),redirect:'follow'});
+    const json=await res.json();
+    if (json.ok) mostrarExito(json.data.nota, form.email_clienta.trim());
+    else throw new Error(json.error||'Error del servidor');
+  } catch(e) { toast('❌ Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='Registrar Nota ✨'; }
 }
 
-// ══════════════════════════════════════════════════════════════
-//  ⑧ PANTALLA DE ÉXITO
-// ══════════════════════════════════════════════════════════════
 function mostrarExito(notaNum, email) {
-  document.getElementById('form-screen').style.display    = 'none';
-  document.getElementById('success-screen').style.display = 'block';
   document.getElementById('s-nota').textContent = notaNum;
   document.getElementById('s-msg').textContent  = email
-    ? `Registrada correctamente.\nSe envió copia a ${email}\ny a yiyi.pash@gmail.com.`
-    : 'Registrada correctamente.\nSe envió copia a yiyi.pash@gmail.com.';
-  window.scrollTo(0, 0);
+    ? `Registrada correctamente.\nCopia enviada a ${email}\ny a yiyi.pash@gmail.com ✅`
+    : 'Registrada correctamente.\nCopia enviada a yiyi.pash@gmail.com ✅';
+  document.getElementById('success-overlay').style.display='flex';
 }
 
 function nuevaNota() {
-  items    = [];
-  tipoPago = null;
-  ['nombre-clienta','email-clienta','comentarios','search-input']
-    .forEach(id => document.getElementById(id).value = '');
-  document.getElementById('items-list').innerHTML       = '';
-  document.getElementById('total-display').textContent  = '$0';
-  document.querySelectorAll('.pago-btn').forEach(b => b.classList.remove('active'));
-
-  const hoy = new Date();
-  document.getElementById('fecha').value =
-    `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`;
-
-  document.getElementById('success-screen').style.display = 'none';
-  document.getElementById('form-screen').style.display    = 'block';
-  window.scrollTo(0, 0);
+  cerrarExito();
+  addTab();
 }
 
-// ══════════════════════════════════════════════════════════════
-//  ⑨ DROPDOWNS DINÁMICOS
-// ══════════════════════════════════════════════════════════════
+function cerrarExito() {
+  document.getElementById('success-overlay').style.display='none';
+  loadTabForm(getTab());
+}
+
+// DROPDOWNS
 function poblarLugares(lista) {
-  const sel = document.getElementById('punto-venta');
-  sel.innerHTML = '<option value="">Selecciona...</option>';
-  lista.forEach(pv => {
-    const opt = document.createElement('option');
-    opt.value       = pv.lugar;
-    opt.textContent = pv.lugar;
-    sel.appendChild(opt);
-  });
-  // Restaurar selección guardada
-  const saved = localStorage.getItem('yp_lugar');
-  if (saved) sel.value = saved;
+  const sel=document.getElementById('punto-venta');
+  sel.innerHTML='<option value="">Selecciona...</option>';
+  lista.forEach(pv=>{const o=document.createElement('option');o.value=pv.lugar;o.textContent=pv.lugar;sel.appendChild(o);});
+  const saved=localStorage.getItem('yp_lugar');
+  if (saved) { sel.value=saved; getTab().form.punto_venta=saved; }
 }
-
 function poblarArtistas(lista) {
-  const sel = document.getElementById('artista');
-  sel.innerHTML = '<option value="">Selecciona...</option>';
-  lista.forEach(col => {
-    const opt = document.createElement('option');
-    opt.value       = col.alias;   // usa alias (Yiyi, Kat, etc.)
-    opt.textContent = col.alias;
-    sel.appendChild(opt);
-  });
-  // Restaurar selección guardada
-  const saved = localStorage.getItem('yp_artista');
-  if (saved) sel.value = saved;
+  const sel=document.getElementById('artista');
+  sel.innerHTML='<option value="">Selecciona...</option>';
+  lista.forEach(col=>{const o=document.createElement('option');o.value=col.alias;o.textContent=col.alias;sel.appendChild(o);});
+  const saved=localStorage.getItem('yp_artista');
+  if (saved) { sel.value=saved; getTab().form.artista=saved; }
 }
-
-// Si el API falla, al menos las opciones básicas quedan disponibles
 function poblarFallback() {
-  poblarLugares([
-    { lugar: 'Yiyipash Studio' },
-    { lugar: 'Peace & Love Stores' },
-    { lugar: 'Casa OKO' },
-  ]);
-  poblarArtistas([
-    { alias: 'Yiyi' },
-    { alias: 'Val'  },
-    { alias: 'Kat'  },
-  ]);
+  poblarLugares([{lugar:'Yiyipash Studio'},{lugar:'Peace & Love Stores'},{lugar:'Casa OKO'}]);
+  poblarArtistas([{alias:'Yiyi'},{alias:'Val'},{alias:'Kat'}]);
 }
 
-// ══════════════════════════════════════════════════════════════
-//  ⑩ UTILIDADES
-// ══════════════════════════════════════════════════════════════
+// NOMBRE → actualiza label del tab
+function onNombre(val) {
+  const tab=getTab(); if(!tab) return;
+  tab.form.nombre_clienta=val;
+  tab.label=val.trim()||`Nota ${tab.id}`;
+  renderTabBar();
+}
+
+// UTILS
 function getBadge(item) {
-  const catMap = {
-    'Tatuaje'                  : { cls:'c-TAT', txt:'TAT' },
-    'Piercing'                 : { cls:'c-PIR', txt:'PIR' },
-    'Piercing Acero Quirurgico': { cls:'c-PAQ', txt:'PAQ' },
-    'Piercing Titanio'         : { cls:'c-PTN', txt:'PTN' },
-    'HUGGIES'                  : { cls:'c-HUG', txt:'HUG' },
-    'Aftercare'                : { cls:'c-AFC', txt:'AFC' },
-    'Revision Piercing'        : { cls:'c-REP', txt:'REP' },
-    'Revision Tatuaje'         : { cls:'c-RET', txt:'RET' },
-  };
-  if (catMap[item.categoria]) return catMap[item.categoria];
-  if (item.tipo === 'S')      return { cls:'c-SRV', txt:'SRV' };
-  const prefix = item.sku.split('-')[0];
-  return { cls:'c-DEF', txt: prefix || '—' };
+  const m={'Tatuaje':'c-TAT','Piercing':'c-PIR','Piercing Acero Quirurgico':'c-PAQ','Piercing Titanio':'c-PTN','HUGGIES':'c-HUG','Aftercare':'c-AFC','Revision Piercing':'c-REP','Revision Tatuaje':'c-RET'};
+  const cls=m[item.categoria]||(item.tipo==='S'?'c-SRV':'c-DEF');
+  const txt=item.sku?item.sku.split('-')[0]:'—';
+  return {cls,txt};
 }
-
 function fmtN(n) { return Number(n).toLocaleString('es-MX'); }
-function pad(n)   { return String(n).padStart(2,'0'); }
-function esc(s)   { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
+function pad(n)  { return String(n).padStart(2,'0'); }
+function esc(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent   = msg;
-  el.style.display = 'block';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.display = 'none'; }, 3500);
+  const el=document.getElementById('toast'); el.textContent=msg; el.style.display='block';
+  clearTimeout(el._t); el._t=setTimeout(()=>{el.style.display='none';},3500);
 }
 
-// ══ START ═════════════════════════════════════════════════════
 init();
 </script>
 </body>
