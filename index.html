@@ -87,7 +87,12 @@
     .perfo-price { font-size:10px; }
 
     /* item controls */
-    .item-controls { display:grid; grid-template-columns:auto auto 1fr auto; gap:7px; align-items:end; }
+    .item-controls { display:grid; grid-template-columns:auto auto auto; gap:7px; align-items:end; }
+    .promo-row { display:flex; align-items:center; gap:7px; margin-top:7px; }
+    .promo-input { flex:1; border:1.5px solid var(--pb); border-radius:7px; padding:7px 10px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--tx); outline:none; transition:border-color .15s; background:#fff; }
+    .promo-input:focus { border-color:var(--p); }
+    .promo-input::placeholder { color:var(--mu); }
+    .descuento-badge { white-space:nowrap; font-size:10px; font-weight:700; color:var(--p); background:var(--pl); border:1.5px solid var(--pb); border-radius:6px; padding:3px 8px; flex-shrink:0; }
     .ic-lbl { font-size:9px; color:var(--mu); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
     .qty-row { display:flex; align-items:center; gap:4px; }
     .qty-btn { width:26px; height:26px; border-radius:6px; border:1.5px solid var(--pb); background:#fff; color:var(--p); font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
@@ -98,7 +103,6 @@
     .mini-in { border:1.5px solid var(--pb); border-radius:7px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--tx); outline:none; background:#fff; padding:5px; transition:border-color .15s; -webkit-appearance:none; appearance:none; }
     .mini-in:focus { border-color:var(--p); }
     .mini-in.precio  { width:70px; padding-left:15px; }
-    .mini-in.promo   { width:56px; text-align:center; font-size:11px; }
     .mini-in.importe { width:72px; padding-left:15px; font-weight:600; }
     .mini-in.libre-sku { width:54px; font-size:11px; text-align:center; }
     .ic-importe { text-align:right; }
@@ -328,6 +332,10 @@ async function init() {
     const json = await res.json();
     if (json.ok) {
       catalogo = json.data.catalogo || [];
+      const _conServ = catalogo.filter(i => i.servicio);
+      console.log('[YP] Catálogo:', catalogo.length, 'ítems,', _conServ.length, 'con perforación vinculada');
+      if (!_conServ.length) console.warn('[YP] Ningún producto tiene ID_Servicio_Default vinculado. Verifica la columna en _catalogo_productos y re-despliega el script.');
+      else _conServ.slice(0,5).forEach(i => console.log(' →', i.sku, '→', i.servicio.sku));
       poblarLugares(json.data.puntos_venta || []);
       poblarArtistas(json.data.colaboradores || []);
     } else { toast('⚠️ ' + (json.error||'Error al cargar')); poblarFallback(); }
@@ -381,7 +389,7 @@ function addItem(idx) {
     descripcion:src.nombre, desc_custom:false, nombre_prod:src.nombre,
     precio_prod:src.precio, precio_serv:srv?srv.precio:0, precio:src.precio,
     cantidad:1, promo:'', importe:src.precio,
-    con_servicio:false, tiene_serv:!!srv, categoria:src.categoria, es_libre:false,
+    con_servicio:false, tiene_serv:!!srv, categoria:src.categoria, es_libre:false, descuento:0, importe_manual:false,
   });
   document.getElementById('search-input').value = ''; closeSearch(); renderItems();
 }
@@ -390,7 +398,7 @@ function addItemLibre() {
   getTab().items.push({
     id:_nextItemId++, sku:'', sku_serv:null, descripcion:'', desc_custom:true,
     nombre_prod:'', precio_prod:0, precio_serv:0, precio:0,
-    cantidad:1, promo:'', importe:0, con_servicio:false, tiene_serv:false, categoria:'', es_libre:true,
+    cantidad:1, promo:'', importe:0, con_servicio:false, tiene_serv:false, categoria:'', es_libre:true, descuento:0, importe_manual:false,
   });
   renderItems();
   setTimeout(() => { const ins=document.querySelectorAll('.item-name-input'); if(ins.length) ins[ins.length-1].focus(); }, 50);
@@ -409,7 +417,34 @@ function toggleServicio(id) {
 
 function onDescripcion(id, val) { const i=getTab().items.find(i=>i.id===id); if(i){i.descripcion=val;i.desc_custom=true;} }
 function onSku(id, val)         { const i=getTab().items.find(i=>i.id===id); if(i) i.sku=val; }
-function onPromo(id, val)       { const i=getTab().items.find(i=>i.id===id); if(i) i.promo=val; }
+function onPromo(id, val) {
+  const item=getTab().items.find(i=>i.id===id); if(!item) return;
+  item.promo=val;
+  const m=val.trim().match(/^(\d+(?:\.\d+)?)%$/);
+  if (m) {
+    // Es descuento porcentual → calcular
+    item.descuento=parseFloat(m[1])/100;
+    item.importe_manual=false;
+    recalcImporte(item);
+  } else if (item.descuento > 0) {
+    // Quitaron el % → volver a precio normal
+    item.descuento=0; item.importe_manual=false; recalcImporte(item);
+  }
+  const el=document.querySelector(`[data-id="${id}"] .importe-input`); if(el) el.value=item.importe;
+  // Actualizar badge sin re-render completo
+  const badge=document.querySelector(`[data-id="${id}"] .descuento-badge`);
+  const row=document.querySelector(`[data-id="${id}"] .promo-row`);
+  if (row) {
+    const existing=row.querySelector('.descuento-badge');
+    if (item.descuento>0) {
+      const ahorro=Math.round((item.precio*item.cantidad-item.importe)*100)/100;
+      const txt=`✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(ahorro)}`;
+      if (existing) existing.textContent=txt;
+      else { const sp=document.createElement('span'); sp.className='descuento-badge'; sp.textContent=txt; row.appendChild(sp); }
+    } else { if(existing) existing.remove(); }
+  }
+  updateTotal();
+}
 
 function stepCantidad(id, delta) {
   const item=getTab().items.find(i=>i.id===id); if(!item) return;
@@ -426,10 +461,16 @@ function onPrecio(id, val) {
 
 function onImporte(id, val) {
   const item=getTab().items.find(i=>i.id===id); if(!item) return;
-  item.importe=parseFloat(val)||0; updateTotal();
+  item.importe=parseFloat(val)||0;
+  item.importe_manual=true;
+  updateTotal();
 }
 
-function recalcImporte(item) { item.importe=Math.round(item.precio*item.cantidad*100)/100; }
+function recalcImporte(item) {
+  if (item.importe_manual) return;
+  const base = item.precio * item.cantidad;
+  item.importe = Math.round(base * (1 - (item.descuento || 0)) * 100) / 100;
+}
 function calcTotal()         { return getItems().reduce((s,i)=>s+i.importe,0); }
 function updateTotal()       { document.getElementById('total-display').textContent=`$${fmtN(calcTotal())}`; renderSumaPagos(); }
 
@@ -467,12 +508,15 @@ function renderItems() {
           <span class="qty-val">${item.cantidad}</span>
           <button class="qty-btn" onclick="stepCantidad(${item.id},+1)">+</button>
         </div></div>
-        <div><div class="ic-lbl">Promo</div>
-          <input class="mini-in promo" type="text" maxlength="10" value="${esc(item.promo)}" placeholder="4x2..." oninput="onPromo(${item.id},this.value)">
-        </div>
         <div class="ic-importe"><div class="ic-lbl">Importe</div><div class="mini-wrap"><span class="sym sym-l">$</span>
           <input class="mini-in importe importe-input" type="number" inputmode="decimal" value="${item.importe}" min="0" step="1" oninput="onImporte(${item.id},this.value)">
         </div></div>
+      </div>
+      <div class="promo-row">
+        <input class="promo-input" type="text" maxlength="20"
+          value="${esc(item.promo)}" placeholder="Promo: 4x2, cumple, 10%..."
+          oninput="onPromo(${item.id},this.value)">
+        ${item.descuento > 0 ? `<span class="descuento-badge">✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(Math.round((item.precio*item.cantidad - item.importe)*100)/100)}</span>` : ''}
       </div>
     </div>`;
   }).join('');
