@@ -307,7 +307,10 @@ function switchTab(id) {
 
 function closeTab(id) {
   const tab = tabs.find(t => t.id === id); if (!tab) return;
-  if (tab.items.length > 0 && !confirm(`¿Cerrar "${tab.label}"?\nSe perderán los ítems sin registrar.`)) return;
+  const msg = tab.items.length > 0
+    ? `¿Segura que quieres borrar esta nota?\nSe perderán los ítems sin registrar.`
+    : `¿Segura que quieres borrar esta nota?`;
+  if (!confirm(msg)) return;
   tabs = tabs.filter(t => t.id !== id);
   if (tabs.length === 0) { const t = crearTab(); activeTabId = t.id; loadTabForm(t); }
   else if (activeTabId === id) { activeTabId = tabs[tabs.length-1].id; loadTabForm(getTab()); }
@@ -513,7 +516,7 @@ function renderItems() {
         </div></div>
       </div>
       <div class="promo-row">
-        <input class="promo-input" type="text" maxlength="20"
+        <input class="promo-input" type="text" maxlength="60"
           value="${esc(item.promo)}" placeholder="Promo: 4x2, cumple, 10%..."
           oninput="onPromo(${item.id},this.value)">
         ${item.descuento > 0 ? `<span class="descuento-badge">✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(Math.round((item.precio*item.cantidad - item.importe)*100)/100)}</span>` : ''}
