@@ -88,11 +88,6 @@
 
     /* item controls */
     .item-controls { display:grid; grid-template-columns:auto auto auto; gap:7px; align-items:end; }
-    .promo-row { display:flex; align-items:center; gap:7px; margin-top:7px; }
-    .promo-input { flex:1; border:1.5px solid var(--pb); border-radius:7px; padding:7px 10px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--tx); outline:none; transition:border-color .15s; background:#fff; }
-    .promo-input:focus { border-color:var(--p); }
-    .promo-input::placeholder { color:var(--mu); }
-    .descuento-badge { white-space:nowrap; font-size:10px; font-weight:700; color:var(--p); background:var(--pl); border:1.5px solid var(--pb); border-radius:6px; padding:3px 8px; flex-shrink:0; }
     .ic-lbl { font-size:9px; color:var(--mu); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
     .qty-row { display:flex; align-items:center; gap:4px; }
     .qty-btn { width:26px; height:26px; border-radius:6px; border:1.5px solid var(--pb); background:#fff; color:var(--p); font-size:16px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; }
@@ -106,6 +101,13 @@
     .mini-in.importe { width:72px; padding-left:15px; font-weight:600; }
     .mini-in.libre-sku { width:54px; font-size:11px; text-align:center; }
     .ic-importe { text-align:right; }
+
+    /* promo row */
+    .promo-row { display:flex; align-items:center; gap:7px; margin-top:7px; }
+    .promo-input { flex:1; border:1.5px solid var(--pb); border-radius:7px; padding:7px 10px; font-family:'Poppins',sans-serif; font-size:12px; color:var(--tx); outline:none; transition:border-color .15s; background:#fff; }
+    .promo-input:focus { border-color:var(--p); }
+    .promo-input::placeholder { color:var(--mu); }
+    .descuento-badge { white-space:nowrap; font-size:10px; font-weight:700; color:var(--p); background:var(--pl); border:1.5px solid var(--pb); border-radius:6px; padding:3px 8px; flex-shrink:0; }
 
     /* libre button */
     .btn-libre { display:inline-flex; align-items:center; gap:5px; margin-top:9px; padding:6px 12px; border:1.5px dashed var(--pb); border-radius:8px; background:transparent; color:var(--mu); font-family:'Poppins',sans-serif; font-size:11px; font-weight:500; cursor:pointer; transition:all .15s; }
@@ -129,6 +131,10 @@
     .total-bar { display:flex; justify-content:space-between; align-items:center; padding:13px 16px; background:var(--pl); border-top:2px solid var(--pb); }
     .total-lbl { font-size:11px; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.8px; }
     .total-val { font-size:26px; font-weight:700; color:var(--p); }
+    .total-desglose { width:100%; }
+    .td-row { display:flex; justify-content:space-between; align-items:center; padding:2px 0; }
+    .td-saldo { border-top:1.5px solid var(--pb); margin-top:5px; padding-top:6px; }
+    .total-val-sm { font-size:16px; font-weight:600; color:var(--mu); }
 
     /* SUBMIT */
     #btn-submit { display:block; width:100%; padding:15px; background:linear-gradient(135deg,var(--p),var(--pm)); color:#fff; border:none; border-radius:0 0 20px 20px; font-family:'Poppins',sans-serif; font-size:15px; font-weight:700; cursor:pointer; letter-spacing:.3px; transition:opacity .2s; }
@@ -228,9 +234,27 @@
     </div>
   </div>
 
-  <div class="total-bar">
+  <!-- ANTICIPO -->
+  <div class="section" id="anticipo-section">
+    <div style="display:flex;align-items:center;width:100%;">
+      <span style="font-size:10px;font-weight:600;color:var(--p);text-transform:uppercase;letter-spacing:.8px;">Anticipo</span>
+      <button class="btn-libre" id="anticipo-btn" onclick="toggleAnticipo()" style="margin:0 0 0 auto;">+ Anticipo</button>
+    </div>
+    <div id="anticipo-inputs" style="display:none;margin-top:9px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--mu);">Monto recibido (Transferencia)</span>
+        <div class="mini-wrap" style="margin-left:auto;">
+          <span class="sym sym-l">$</span>
+          <input class="mini-in precio" id="anticipo-monto" type="number" inputmode="decimal"
+            value="100" min="0" step="10" oninput="onAnticipo(this.value)" style="width:84px;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-bar" id="total-bar">
     <span class="total-lbl">Total</span>
-    <span class="total-val" id="total-display">$0</span>
+    <span class="total-val">$0</span>
   </div>
   <button id="btn-submit" onclick="enviarNota()">Registrar Nota ✨</button>
 </div>
@@ -263,6 +287,7 @@ function crearTab() {
   const tab = {
     id: _nextTabId++, label: `Nota ${_nextTabId - 1}`,
     items: [], pagosActivos: [], pagosMontos: { Efectivo:0, Transferencia:0, Tarjeta:0 },
+    anticipo_activo: false, anticipo_monto: 100,
     form: {
       punto_venta: localStorage.getItem('yp_lugar') || '',
       fecha: `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`,
@@ -284,6 +309,10 @@ function saveCurrentForm() {
   tab.form.nombre_clienta = document.getElementById('nombre-clienta').value;
   tab.form.email_clienta  = document.getElementById('email-clienta').value;
   tab.form.comentarios    = document.getElementById('comentarios').value;
+  const ai = document.getElementById('anticipo-inputs');
+  const am = document.getElementById('anticipo-monto');
+  tab.anticipo_activo = ai ? ai.style.display !== 'none' : false;
+  if (am) tab.anticipo_monto = parseFloat(am.value) || 0;
 }
 function saveField(key, val) { const tab = getTab(); if (tab) tab.form[key] = val; }
 
@@ -294,6 +323,13 @@ function loadTabForm(tab) {
   document.getElementById('nombre-clienta').value = tab.form.nombre_clienta;
   document.getElementById('email-clienta').value  = tab.form.email_clienta;
   document.getElementById('comentarios').value    = tab.form.comentarios;
+  // Anticipo
+  const ai = document.getElementById('anticipo-inputs');
+  const ab = document.getElementById('anticipo-btn');
+  const am = document.getElementById('anticipo-monto');
+  if (ai) ai.style.display = tab.anticipo_activo ? 'block' : 'none';
+  if (ab) ab.textContent   = tab.anticipo_activo ? '× Quitar anticipo' : '+ Anticipo';
+  if (am) am.value         = tab.anticipo_monto;
   renderItems(); renderPagoButtons(); renderPagoMontos(); updateTotal(); renderTabBar();
 }
 
@@ -335,10 +371,10 @@ async function init() {
     const json = await res.json();
     if (json.ok) {
       catalogo = json.data.catalogo || [];
-      const _conServ = catalogo.filter(i => i.servicio);
-      console.log('[YP] Catálogo:', catalogo.length, 'ítems,', _conServ.length, 'con perforación vinculada');
-      if (!_conServ.length) console.warn('[YP] Ningún producto tiene ID_Servicio_Default vinculado. Verifica la columna en _catalogo_productos y re-despliega el script.');
-      else _conServ.slice(0,5).forEach(i => console.log(' →', i.sku, '→', i.servicio.sku));
+      const _cs = catalogo.filter(i => i.servicio);
+      console.log('[YP] Catálogo:', catalogo.length, 'ítems,', _cs.length, 'con perforación vinculada');
+      if (!_cs.length) console.warn('[YP] Ningún producto tiene ID_Servicio_Default vinculado.');
+      else _cs.slice(0,5).forEach(i => console.log(' →', i.sku, '→', i.servicio.sku));
       poblarLugares(json.data.puntos_venta || []);
       poblarArtistas(json.data.colaboradores || []);
     } else { toast('⚠️ ' + (json.error||'Error al cargar')); poblarFallback(); }
@@ -392,7 +428,8 @@ function addItem(idx) {
     descripcion:src.nombre, desc_custom:false, nombre_prod:src.nombre,
     precio_prod:src.precio, precio_serv:srv?srv.precio:0, precio:src.precio,
     cantidad:1, promo:'', importe:src.precio,
-    con_servicio:false, tiene_serv:!!srv, categoria:src.categoria, es_libre:false, descuento:0, importe_manual:false,
+    con_servicio:false, tiene_serv:!!srv, categoria:src.categoria, es_libre:false,
+    descuento:0, importe_manual:false,
   });
   document.getElementById('search-input').value = ''; closeSearch(); renderItems();
 }
@@ -401,7 +438,8 @@ function addItemLibre() {
   getTab().items.push({
     id:_nextItemId++, sku:'', sku_serv:null, descripcion:'', desc_custom:true,
     nombre_prod:'', precio_prod:0, precio_serv:0, precio:0,
-    cantidad:1, promo:'', importe:0, con_servicio:false, tiene_serv:false, categoria:'', es_libre:true, descuento:0, importe_manual:false,
+    cantidad:1, promo:'', importe:0, con_servicio:false, tiene_serv:false, categoria:'', es_libre:true,
+    descuento:0, importe_manual:false,
   });
   renderItems();
   setTimeout(() => { const ins=document.querySelectorAll('.item-name-input'); if(ins.length) ins[ins.length-1].focus(); }, 50);
@@ -420,34 +458,6 @@ function toggleServicio(id) {
 
 function onDescripcion(id, val) { const i=getTab().items.find(i=>i.id===id); if(i){i.descripcion=val;i.desc_custom=true;} }
 function onSku(id, val)         { const i=getTab().items.find(i=>i.id===id); if(i) i.sku=val; }
-function onPromo(id, val) {
-  const item=getTab().items.find(i=>i.id===id); if(!item) return;
-  item.promo=val;
-  const m=val.trim().match(/^(\d+(?:\.\d+)?)%$/);
-  if (m) {
-    // Es descuento porcentual → calcular
-    item.descuento=parseFloat(m[1])/100;
-    item.importe_manual=false;
-    recalcImporte(item);
-  } else if (item.descuento > 0) {
-    // Quitaron el % → volver a precio normal
-    item.descuento=0; item.importe_manual=false; recalcImporte(item);
-  }
-  const el=document.querySelector(`[data-id="${id}"] .importe-input`); if(el) el.value=item.importe;
-  // Actualizar badge sin re-render completo
-  const badge=document.querySelector(`[data-id="${id}"] .descuento-badge`);
-  const row=document.querySelector(`[data-id="${id}"] .promo-row`);
-  if (row) {
-    const existing=row.querySelector('.descuento-badge');
-    if (item.descuento>0) {
-      const ahorro=Math.round((item.precio*item.cantidad-item.importe)*100)/100;
-      const txt=`✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(ahorro)}`;
-      if (existing) existing.textContent=txt;
-      else { const sp=document.createElement('span'); sp.className='descuento-badge'; sp.textContent=txt; row.appendChild(sp); }
-    } else { if(existing) existing.remove(); }
-  }
-  updateTotal();
-}
 
 function stepCantidad(id, delta) {
   const item=getTab().items.find(i=>i.id===id); if(!item) return;
@@ -464,8 +474,29 @@ function onPrecio(id, val) {
 
 function onImporte(id, val) {
   const item=getTab().items.find(i=>i.id===id); if(!item) return;
-  item.importe=parseFloat(val)||0;
-  item.importe_manual=true;
+  item.importe=parseFloat(val)||0; item.importe_manual=true; updateTotal();
+}
+
+function onPromo(id, val) {
+  const item=getTab().items.find(i=>i.id===id); if(!item) return;
+  item.promo=val;
+  const m=val.trim().match(/^(\d+(?:\.\d+)?)%$/);
+  if (m) {
+    item.descuento=parseFloat(m[1])/100; item.importe_manual=false; recalcImporte(item);
+  } else if (item.descuento > 0) {
+    item.descuento=0; item.importe_manual=false; recalcImporte(item);
+  }
+  const el=document.querySelector(`[data-id="${id}"] .importe-input`); if(el) el.value=item.importe;
+  const row=document.querySelector(`[data-id="${id}"] .promo-row`);
+  if (row) {
+    const existing=row.querySelector('.descuento-badge');
+    if (item.descuento>0) {
+      const ahorro=Math.round((item.precio*item.cantidad-item.importe)*100)/100;
+      const txt=`✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(ahorro)}`;
+      if (existing) existing.textContent=txt;
+      else { const sp=document.createElement('span'); sp.className='descuento-badge'; sp.textContent=txt; row.appendChild(sp); }
+    } else { if(existing) existing.remove(); }
+  }
   updateTotal();
 }
 
@@ -474,8 +505,26 @@ function recalcImporte(item) {
   const base = item.precio * item.cantidad;
   item.importe = Math.round(base * (1 - (item.descuento || 0)) * 100) / 100;
 }
-function calcTotal()         { return getItems().reduce((s,i)=>s+i.importe,0); }
-function updateTotal()       { document.getElementById('total-display').textContent=`$${fmtN(calcTotal())}`; renderSumaPagos(); }
+function calcTotal()  { return getItems().reduce((s,i)=>s+i.importe,0); }
+function calcSaldo()  {
+  const tab=getTab(), total=calcTotal();
+  return tab.anticipo_activo ? Math.max(0, total - (tab.anticipo_monto||0)) : total;
+}
+function updateTotal() {
+  const tab=getTab(), total=calcTotal(), bar=document.getElementById('total-bar');
+  if (!bar) return;
+  if (tab.anticipo_activo && tab.anticipo_monto > 0) {
+    const saldo=Math.max(0,total-tab.anticipo_monto);
+    bar.innerHTML=`<div class="total-desglose">
+      <div class="td-row"><span class="total-lbl">Total</span><span class="total-val-sm">$${fmtN(total)}</span></div>
+      <div class="td-row"><span class="total-lbl">Anticipo (transf.)</span><span class="total-val-sm" style="color:#15803d;">−$${fmtN(tab.anticipo_monto)}</span></div>
+      <div class="td-row td-saldo"><span class="total-lbl">Saldo</span><span class="total-val">$${fmtN(saldo)}</span></div>
+    </div>`;
+  } else {
+    bar.innerHTML=`<span class="total-lbl">Total</span><span class="total-val">$${fmtN(total)}</span>`;
+  }
+  renderSumaPagos();
+}
 
 // ÍTEMS — render
 function renderItems() {
@@ -489,11 +538,12 @@ function renderItems() {
     const perfoHtml = item.tiene_serv ? `
       <div class="perfo-wrap">
         <button class="perfo-toggle ${item.con_servicio?'on':''}" onclick="toggleServicio(${item.id})">
-          <span>${item.con_servicio?'🔩':'○'}</span>
+          <span>${item.con_servicio?'●':'○'}</span>
           <span>${item.con_servicio?'Perforación incluida':'+ Incluir perforación'}</span>
           <span class="perfo-price">+$${fmtN(item.precio_serv)}</span>
         </button>
       </div>` : '';
+    const ahorro = item.descuento>0 ? Math.round((item.precio*item.cantidad-item.importe)*100)/100 : 0;
     return `<div class="item-card" data-id="${item.id}">
       <div class="item-top">
         ${topLeft}
@@ -519,7 +569,7 @@ function renderItems() {
         <input class="promo-input" type="text" maxlength="60"
           value="${esc(item.promo)}" placeholder="Promo: 4x2, cumple, 10%..."
           oninput="onPromo(${item.id},this.value)">
-        ${item.descuento > 0 ? `<span class="descuento-badge">✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(Math.round((item.precio*item.cantidad - item.importe)*100)/100)}</span>` : ''}
+        ${item.descuento>0?`<span class="descuento-badge">✂️ −${Math.round(item.descuento*100)}% · −$${fmtN(ahorro)}</span>`:''}
       </div>
     </div>`;
   }).join('');
@@ -554,29 +604,44 @@ function onPagoMonto(tipo, val) { const tab=getTab(); tab.pagosMontos[tipo]=pars
 function renderSumaPagos() {
   const tab=getTab(), el=document.getElementById('pago-suma-lbl');
   if (!el||tab.pagosActivos.length<=1) return;
-  const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0), total=calcTotal();
-  if (Math.abs(suma-total)<0.5) { el.className='pago-suma ok'; el.textContent=`✅ Suma correcta ($${fmtN(suma)})`; }
-  else { el.className='pago-suma mal'; el.textContent=`⚠️ Suma: $${fmtN(suma)} · Diferencia: $${fmtN(total-suma)}`; }
+  const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0), ref=calcSaldo();
+  if (Math.abs(suma-ref)<0.5) { el.className='pago-suma ok'; el.textContent=`✅ Suma correcta ($${fmtN(suma)})`; }
+  else { el.className='pago-suma mal'; el.textContent=`⚠️ Suma: $${fmtN(suma)} · Diferencia: $${fmtN(ref-suma)}`; }
 }
 function getPagosPayload() {
-  const tab=getTab(), total=calcTotal();
-  if (tab.pagosActivos.length===1) return [{tipo:tab.pagosActivos[0], monto:total}];
+  const tab=getTab(), saldo=calcSaldo();
+  if (tab.pagosActivos.length===1) return [{tipo:tab.pagosActivos[0], monto:saldo}];
   return tab.pagosActivos.map(tipo=>({tipo, monto:tab.pagosMontos[tipo]||0}));
 }
+
+// ANTICIPO
+function toggleAnticipo() {
+  const tab=getTab();
+  tab.anticipo_activo=!tab.anticipo_activo;
+  if (!tab.anticipo_activo) tab.anticipo_monto=100;
+  const ai=document.getElementById('anticipo-inputs');
+  const ab=document.getElementById('anticipo-btn');
+  const am=document.getElementById('anticipo-monto');
+  ai.style.display=tab.anticipo_activo?'block':'none';
+  ab.textContent=tab.anticipo_activo?'× Quitar anticipo':'+ Anticipo';
+  if (am) am.value=tab.anticipo_monto;
+  updateTotal();
+}
+function onAnticipo(val) { const tab=getTab(); tab.anticipo_monto=parseFloat(val)||0; updateTotal(); }
 
 // ENVIAR
 async function enviarNota() {
   saveCurrentForm();
   const tab=getTab(), form=tab.form;
-  if (!form.punto_venta)         return toast('⚠️ Selecciona el lugar');
-  if (!form.fecha)               return toast('⚠️ Pon la fecha');
-  if (!form.artista)             return toast('⚠️ Selecciona el artista');
+  if (!form.punto_venta)           return toast('⚠️ Selecciona el lugar');
+  if (!form.fecha)                 return toast('⚠️ Pon la fecha');
+  if (!form.artista)               return toast('⚠️ Selecciona el artista');
   if (!form.nombre_clienta.trim()) return toast('⚠️ Escribe el nombre de la clienta');
-  if (!tab.items.length)         return toast('⚠️ Agrega al menos un servicio o producto');
-  if (!tab.pagosActivos.length)  return toast('⚠️ Selecciona el tipo de pago');
+  if (!tab.items.length)           return toast('⚠️ Agrega al menos un servicio o producto');
+  if (!tab.pagosActivos.length)    return toast('⚠️ Selecciona el tipo de pago');
   if (tab.pagosActivos.length>1) {
-    const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0), total=calcTotal();
-    if (Math.abs(suma-total)>0.5) return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el total ($${fmtN(total)})`);
+    const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0), saldo=calcSaldo();
+    if (Math.abs(suma-saldo)>0.5) return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el saldo ($${fmtN(saldo)})`);
   }
   localStorage.setItem('yp_artista',form.artista); localStorage.setItem('yp_lugar',form.punto_venta);
   const payload = {
@@ -588,7 +653,8 @@ async function enviarNota() {
       cantidad:i.cantidad, precio_prod:i.precio_prod, precio_serv:i.con_servicio?i.precio_serv:0,
       precio:i.precio, promo:i.promo, importe:i.importe,
     })),
-    total:calcTotal(), pagos:getPagosPayload(), comentarios:form.comentarios||'-',
+    total:calcTotal(), anticipo:tab.anticipo_activo?(tab.anticipo_monto||0):0,
+    pagos:getPagosPayload(), comentarios:form.comentarios||'-',
   };
   const btn=document.getElementById('btn-submit');
   btn.disabled=true; btn.textContent='Enviando...';
@@ -608,16 +674,8 @@ function mostrarExito(notaNum, email) {
     : 'Registrada correctamente.\nCopia enviada a yiyi.pash@gmail.com ✅';
   document.getElementById('success-overlay').style.display='flex';
 }
-
-function nuevaNota() {
-  cerrarExito();
-  addTab();
-}
-
-function cerrarExito() {
-  document.getElementById('success-overlay').style.display='none';
-  loadTabForm(getTab());
-}
+function nuevaNota()  { cerrarExito(); addTab(); }
+function cerrarExito(){ document.getElementById('success-overlay').style.display='none'; loadTabForm(getTab()); }
 
 // DROPDOWNS
 function poblarLugares(lista) {
@@ -642,9 +700,7 @@ function poblarFallback() {
 // NOMBRE → actualiza label del tab
 function onNombre(val) {
   const tab=getTab(); if(!tab) return;
-  tab.form.nombre_clienta=val;
-  tab.label=val.trim()||`Nota ${tab.id}`;
-  renderTabBar();
+  tab.form.nombre_clienta=val; tab.label=val.trim()||`Nota ${tab.id}`; renderTabBar();
 }
 
 // UTILS
