@@ -128,6 +128,22 @@
     .btn-nueva{padding:12px 24px;background:linear-gradient(135deg,var(--p),var(--pm));color:#fff;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
     .btn-volver{padding:10px 24px;background:var(--pl);color:var(--p);border:2px solid var(--pb);border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
     #toast{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:10px 20px;border-radius:10px;font-size:12px;z-index:999;max-width:calc(100vw - 32px);text-align:center;white-space:pre-line;}
+    /* ── EMAIL CHIPS ── */
+    .chips-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;min-height:0;}
+    .chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px 3px 10px;background:var(--pl);border:1.5px solid var(--pb);border-radius:20px;font-size:11px;font-weight:500;color:var(--p);}
+    .chip-x{font-size:14px;color:var(--mu);cursor:pointer;line-height:1;}
+    .chip-x:hover{color:var(--p);}
+    .email-add-row{display:flex;gap:6px;margin-top:5px;}
+    .email-add-input{flex:1;border:1.5px solid var(--pb);border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--tx);outline:none;transition:border-color .15s;background:#fff;}
+    .email-add-input:focus{border-color:var(--p);}
+    .email-add-btn{width:34px;height:34px;flex-shrink:0;border-radius:8px;border:1.5px solid var(--pb);background:var(--pl);color:var(--p);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'Poppins',sans-serif;}
+    .email-add-btn:hover{border-color:var(--p);}
+    /* ── TOGGLE MISMOS ── */
+    .mismo-toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+    .toggle-track{width:30px;height:17px;border-radius:9px;background:var(--pb);position:relative;transition:background .15s;flex-shrink:0;}
+    .toggle-track.on{background:var(--p);}
+    .toggle-thumb{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+    .toggle-track.on .toggle-thumb{transform:translateX(13px);}
   </style>
 </head>
 <body>
@@ -161,17 +177,39 @@
     </div>
   </div>
 
-  <!-- Elaboró + Nombre + Email -->
+  <!-- Elaboró + Nombre + Emails -->
   <div class="section">
     <div class="field" style="margin-bottom:9px;"><label>Elaboró</label>
       <select id="elaboro-sel" onchange="onElabora(this)"><option value="">Selecciona...</option></select>
     </div>
-    <div class="row2">
-      <div class="field"><label>Nombre clienta</label>
-        <input type="text" id="nombre-clienta" placeholder="Nombre..." oninput="onNombre(this.value)">
+    <div class="field" style="margin-bottom:10px;"><label>Nombre clienta</label>
+      <input type="text" id="nombre-clienta" placeholder="Nombre..." oninput="onNombre(this.value)">
+    </div>
+    <!-- Correos nota -->
+    <div class="field" style="margin-bottom:11px;">
+      <label>Nota digital — correos <span style="font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0;font-size:10px;">(opcional)</span></label>
+      <div class="chips-wrap" id="chips-nota"></div>
+      <div class="email-add-row">
+        <input type="email" class="email-add-input" id="input-email-nota" placeholder="correo@ejemplo.com" autocomplete="email">
+        <button class="email-add-btn" onclick="addEmailNota()">+</button>
       </div>
-      <div class="field"><label>Email (opcional)</label>
-        <input type="email" id="email-clienta" placeholder="correo@..." onchange="saveField('email_clienta',this.value)">
+    </div>
+    <!-- Correos manual -->
+    <div class="field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label style="margin-bottom:0;">Manual de cuidados</label>
+        <div class="mismo-toggle" onclick="toggleManualMismo()">
+          <div class="toggle-track on" id="toggle-mismo-track"><div class="toggle-thumb"></div></div>
+          <span style="font-size:10px;color:var(--mu);">Mismos</span>
+        </div>
+      </div>
+      <div id="manual-mismo-hint" style="font-size:10px;color:var(--mu);padding:2px 0 0;">Se enviará a los mismos correos que la nota</div>
+      <div id="manual-emails-extra" style="display:none;">
+        <div class="chips-wrap" id="chips-manual"></div>
+        <div class="email-add-row">
+          <input type="email" class="email-add-input" id="input-email-manual" placeholder="correo@ejemplo.com" autocomplete="email">
+          <button class="email-add-btn" onclick="addEmailManual()">+</button>
+        </div>
       </div>
     </div>
   </div>
@@ -256,11 +294,12 @@ function crearTab(){
     id:_nextTabId++,label:`Nota ${_nextTabId-1}`,items:[],
     pagosActivos:[],pagosMontos:{Efectivo:0,Transferencia:0,Tarjeta:0},
     anticipo_activo:false,anticipo_monto:100,
+    emails_nota:[],emails_manual:[],manual_mismo:true,
     elaboro:{id:localStorage.getItem('yp_elaboro_id')||'',alias:localStorage.getItem('yp_elaboro_alias')||''},
     form:{
       punto_venta:localStorage.getItem('yp_lugar')||'',
       fecha:`${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`,
-      nombre_clienta:'',email_clienta:'',comentarios:'',
+      nombre_clienta:'',comentarios:'',
     },
   };
   tabs.push(tab);return tab;
@@ -273,7 +312,6 @@ function saveCurrentForm(){
   tab.form.punto_venta    =document.getElementById('punto-venta').value;
   tab.form.fecha          =document.getElementById('fecha').value;
   tab.form.nombre_clienta =document.getElementById('nombre-clienta').value;
-  tab.form.email_clienta  =document.getElementById('email-clienta').value;
   tab.form.comentarios    =document.getElementById('comentarios').value;
   const sel=document.getElementById('elaboro-sel');
   if(sel){const opt=sel.options[sel.selectedIndex];tab.elaboro={id:sel.value,alias:sel.value?(opt?.dataset.alias||sel.value):''};}
@@ -287,13 +325,13 @@ function loadTabForm(tab){
   document.getElementById('punto-venta').value    =tab.form.punto_venta;
   document.getElementById('fecha').value          =tab.form.fecha;
   document.getElementById('nombre-clienta').value =tab.form.nombre_clienta;
-  document.getElementById('email-clienta').value  =tab.form.email_clienta;
   document.getElementById('comentarios').value    =tab.form.comentarios;
   const sel=document.getElementById('elaboro-sel');if(sel)sel.value=tab.elaboro?.id||'';
   const ai=document.getElementById('anticipo-inputs'),ab=document.getElementById('anticipo-btn'),am=document.getElementById('anticipo-monto');
   if(ai)ai.style.display=tab.anticipo_activo?'block':'none';
   if(ab)ab.textContent=tab.anticipo_activo?'× Quitar anticipo':'+ Anticipo';
   if(am)am.value=tab.anticipo_monto;
+  renderEmailChips();
   renderItems();renderPagoButtons();renderPagoMontos();updateTotal();renderTabBar();
 }
 
@@ -340,6 +378,11 @@ async function init(){
   inp.addEventListener('focus',()=>{if(inp.value.length>=2)onSearch();});
   inp.addEventListener('blur',()=>setTimeout(closeSearch,160));
   document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))closeSearch();});
+  // Enter en inputs de email
+  const inEN=document.getElementById('input-email-nota');
+  if(inEN)inEN.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addEmailNota();}});
+  const inEM=document.getElementById('input-email-manual');
+  if(inEM)inEM.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addEmailManual();}});
 }
 
 // ── BÚSQUEDA ────────────────────────────────────────────────────────
@@ -531,6 +574,57 @@ function renderItems(){
   updateTotal();
 }
 
+// ── EMAIL CHIPS ─────────────────────────────────────────────────────
+function addEmailNota(){
+  const inp=document.getElementById('input-email-nota');
+  const val=(inp.value||'').trim();
+  if(!val)return;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val))return toast('⚠️ Correo inválido');
+  const tab=getTab();if(!tab)return;
+  if(tab.emails_nota.includes(val))return toast('⚠️ Correo ya agregado');
+  tab.emails_nota.push(val);inp.value='';renderEmailChips();
+}
+function removeEmailNota(idx){
+  const tab=getTab();if(!tab)return;
+  tab.emails_nota.splice(idx,1);renderEmailChips();
+}
+function addEmailManual(){
+  const inp=document.getElementById('input-email-manual');
+  const val=(inp.value||'').trim();
+  if(!val)return;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val))return toast('⚠️ Correo inválido');
+  const tab=getTab();if(!tab)return;
+  if(tab.emails_manual.includes(val))return toast('⚠️ Correo ya agregado');
+  tab.emails_manual.push(val);inp.value='';renderEmailChips();
+}
+function removeEmailManual(idx){
+  const tab=getTab();if(!tab)return;
+  tab.emails_manual.splice(idx,1);renderEmailChips();
+}
+function toggleManualMismo(){
+  const tab=getTab();if(!tab)return;
+  tab.manual_mismo=!tab.manual_mismo;renderManualToggle();
+}
+function renderManualToggle(){
+  const tab=getTab();if(!tab)return;
+  const track=document.getElementById('toggle-mismo-track');
+  const extra=document.getElementById('manual-emails-extra');
+  const hint=document.getElementById('manual-mismo-hint');
+  if(track)track.classList.toggle('on',tab.manual_mismo);
+  if(extra)extra.style.display=tab.manual_mismo?'none':'block';
+  if(hint)hint.style.display=tab.manual_mismo?'block':'none';
+}
+function renderEmailChips(){
+  const tab=getTab();if(!tab)return;
+  const cn=document.getElementById('chips-nota');
+  if(cn)cn.innerHTML=tab.emails_nota.map((e,i)=>
+    `<span class="chip">${esc(e)}<span class="chip-x" onclick="removeEmailNota(${i})">×</span></span>`).join('');
+  const cm=document.getElementById('chips-manual');
+  if(cm)cm.innerHTML=tab.emails_manual.map((e,i)=>
+    `<span class="chip">${esc(e)}<span class="chip-x" onclick="removeEmailManual(${i})">×</span></span>`).join('');
+  renderManualToggle();
+}
+
 // ── PAGOS ───────────────────────────────────────────────────────────
 function togglePago(btn){
   const tipo=btn.dataset.pago,tab=getTab(),idx=tab.pagosActivos.indexOf(tipo);
@@ -581,7 +675,6 @@ async function enviarNota(){
   if(!tab.elaboro.id)             return toast('⚠️ Selecciona quién elaboró la nota');
   if(!form.nombre_clienta.trim()) return toast('⚠️ Escribe el nombre de la clienta');
   if(!tab.items.length)           return toast('⚠️ Agrega al menos un servicio o producto');
-  // Artista requerido por ítem
   for(const item of tab.items){
     if(requiresArtista(item)&&!item.id_artista)
       return toast(`⚠️ "${item.descripcion||item.sku}" requiere artista`);
@@ -597,7 +690,9 @@ async function enviarNota(){
   const payload={
     fecha:form.fecha,punto_venta:form.punto_venta,
     id_elaboro:tab.elaboro.id,alias_elaboro:tab.elaboro.alias,
-    nombre_clienta:form.nombre_clienta.trim(),email_clienta:form.email_clienta.trim(),
+    nombre_clienta:form.nombre_clienta.trim(),
+    emails_nota:tab.emails_nota,
+    emails_manual:tab.manual_mismo?tab.emails_nota:tab.emails_manual,
     items:tab.items.map(i=>({
       sku:i.sku,sku_serv:i.con_servicio?i.sku_serv:null,
       descripcion:i.descripcion||i.nombre_prod||'-',con_servicio:i.con_servicio,
@@ -613,17 +708,18 @@ async function enviarNota(){
   try{
     const res=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload),redirect:'follow'});
     const json=await res.json();
-    if(json.ok)mostrarExito(json.data.nota,form.email_clienta.trim());
+    if(json.ok)mostrarExito(json.data.nota,tab.emails_nota);
     else throw new Error(json.error||'Error del servidor');
   }catch(e){toast('❌ Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Registrar Nota ✨';}
 }
 
-function mostrarExito(notaNum,email){
+function mostrarExito(notaNum,emailsNota){
   document.getElementById('s-nota').textContent=notaNum;
-  document.getElementById('s-msg').textContent=email
-    ?`Registrada correctamente.\nCopia enviada a ${email}\ny a yiyi.pash@gmail.com ✅`
+  const txt=emailsNota&&emailsNota.length
+    ?`Registrada correctamente.\nNota enviada a:\n${emailsNota.join('\n')}\ny a yiyi.pash@gmail.com ✅`
     :'Registrada correctamente.\nCopia enviada a yiyi.pash@gmail.com ✅';
+  document.getElementById('s-msg').textContent=txt;
   document.getElementById('success-overlay').style.display='flex';
 }
 function nuevaNota(){cerrarExito();addTab();}
