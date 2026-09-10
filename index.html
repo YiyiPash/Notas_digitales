@@ -704,6 +704,7 @@ async function enviarNota(){
     pagos:getPagosPayload(),comentarios:form.comentarios||'-',
   };
   const btn=document.getElementById('btn-submit');
+  console.log('PAYLOAD:', JSON.stringify(payload));
   btn.disabled=true;btn.textContent='Enviando...';
   try{
     const res=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload),redirect:'follow'});
