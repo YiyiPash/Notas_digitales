@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Yiyi Pash · Notas</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -308,7 +309,12 @@ function getTab(){return tabs.find(t=>t.id===activeTabId);}
 function getItems(){return getTab()?.items||[];}
 
 function saveCurrentForm(){
-  const tab=getTab();if(!tab)return;
+  const tab=getTab();if(!tab)return;  // ← primero esto
+  // luego la auto-captura:
+  const pN=(document.getElementById('input-email-nota')?.value||'').trim();
+  if(pN&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pN)&&!tab.emails_nota.includes(pN)){tab.emails_nota.push(pN);document.getElementById('input-email-nota').value='';renderEmailChips();}
+  if(!tab.manual_mismo){const pM=(document.getElementById('input-email-manual')?.value||'').trim();if(pM&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pM)&&!tab.emails_manual.includes(pM)){tab.emails_manual.push(pM);document.getElementById('input-email-manual').value='';renderEmailChips();}}
+  // luego el resto normal...
   tab.form.punto_venta    =document.getElementById('punto-venta').value;
   tab.form.fecha          =document.getElementById('fecha').value;
   tab.form.nombre_clienta =document.getElementById('nombre-clienta').value;
@@ -684,6 +690,7 @@ async function enviarNota(){
     const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0),saldo=calcSaldo();
     if(Math.abs(suma-saldo)>0.5)return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el saldo ($${fmtN(saldo)})`);
   }
+  if(!confirm(`¿Registrar nota?\n${form.nombre_clienta.trim()} · $${fmtN(calcTotal())}`))return;
   localStorage.setItem('yp_elaboro_id',tab.elaboro.id);
   localStorage.setItem('yp_elaboro_alias',tab.elaboro.alias);
   localStorage.setItem('yp_lugar',form.punto_venta);
@@ -704,7 +711,6 @@ async function enviarNota(){
     pagos:getPagosPayload(),comentarios:form.comentarios||'-',
   };
   const btn=document.getElementById('btn-submit');
-  console.log('PAYLOAD:', JSON.stringify(payload));
   btn.disabled=true;btn.textContent='Enviando...';
   try{
     const res=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload),redirect:'follow'});
