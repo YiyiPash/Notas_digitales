@@ -145,6 +145,8 @@
     .toggle-track.on{background:var(--p);}
     .toggle-thumb{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
     .toggle-track.on .toggle-thumb{transform:translateX(13px);}
+    .btn-preset{display:inline-flex;align-items:center;padding:3px 9px;border:1.5px dashed var(--pb);border-radius:6px;background:transparent;color:var(--mu);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;margin-top:4px;}
+.btn-preset:hover{border-color:var(--p);color:var(--p);}
   </style>
 </head>
 <body>
@@ -188,12 +190,13 @@
     </div>
     <!-- Correos nota -->
     <div class="field" style="margin-bottom:11px;">
-      <label>Nota digital — correos <span style="font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0;font-size:10px;">(opcional)</span></label>
+      <label>Nota digital — correos <span style="font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0;font-size:10px;">(requerido)</span></label>
       <div class="chips-wrap" id="chips-nota"></div>
-      <div class="email-add-row">
-        <input type="email" class="email-add-input" id="input-email-nota" placeholder="correo@ejemplo.com" autocomplete="email">
-        <button class="email-add-btn" onclick="addEmailNota()">+</button>
-      </div>
+<div class="email-add-row">
+  <input type="email" class="email-add-input" id="input-email-nota" placeholder="correo@ejemplo.com" autocomplete="email">
+  <button class="email-add-btn" onclick="addEmailNota()">+</button>
+</div>
+<button class="btn-preset" onclick="addEmailPreset('nota')">＋ yiyi.pash@gmail.com</button>
     </div>
     <!-- Correos manual -->
     <div class="field">
@@ -208,10 +211,11 @@
       <div id="manual-emails-extra" style="display:none;">
         <div class="chips-wrap" id="chips-manual"></div>
         <div class="email-add-row">
-          <input type="email" class="email-add-input" id="input-email-manual" placeholder="correo@ejemplo.com" autocomplete="email">
-          <button class="email-add-btn" onclick="addEmailManual()">+</button>
+  <input type="email" class="email-add-input" id="input-email-manual" placeholder="correo@ejemplo.com" autocomplete="email">
+  <button class="email-add-btn" onclick="addEmailManual()">+</button>
+</div>
+<button class="btn-preset" onclick="addEmailPreset('manual')">＋ yiyi.pash@gmail.com</button>
         </div>
-      </div>
     </div>
   </div>
 
@@ -360,7 +364,12 @@ function renderTabBar(){
     </div>`).join('');
   const ref=document.getElementById('header-ref');if(ref)ref.textContent=getTab()?.label||'——';
 }
-
+function addEmailPreset(tipo){
+  const email='yiyi.pash@gmail.com', tab=getTab(); if(!tab)return;
+  const lista=tipo==='nota'?tab.emails_nota:tab.emails_manual;
+  if(lista.includes(email))return toast('⚠️ Correo ya agregado');
+  lista.push(email); renderEmailChips();
+}
 // ── INIT ────────────────────────────────────────────────────────────
 async function init(){
   const tab=crearTab();activeTabId=tab.id;
@@ -690,6 +699,8 @@ async function enviarNota(){
     const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0),saldo=calcSaldo();
     if(Math.abs(suma-saldo)>0.5)return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el saldo ($${fmtN(saldo)})`);
   }
+  if(!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
+if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al menos un correo para el manual');
   if(!confirm(`¿Registrar nota?\n${form.nombre_clienta.trim()} · $${fmtN(calcTotal())}`))return;
   localStorage.setItem('yp_elaboro_id',tab.elaboro.id);
   localStorage.setItem('yp_elaboro_alias',tab.elaboro.alias);
