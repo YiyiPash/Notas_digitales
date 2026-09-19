@@ -147,6 +147,14 @@
     .toggle-track.on .toggle-thumb{transform:translateX(13px);}
     .btn-preset{display:inline-flex;align-items:center;padding:3px 9px;border:1.5px dashed var(--pb);border-radius:6px;background:transparent;color:var(--mu);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;margin-top:4px;}
 .btn-preset:hover{border-color:var(--p);color:var(--p);}
+    /* ── PREVIEW OVERLAY ── */
+#preview-overlay{display:none;position:fixed;inset:0;background:rgba(253,242,248,.96);z-index:500;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px;overflow-y:auto;}
+.preview-wrap{width:100%;max-width:480px;margin:0 auto;}
+.preview-nota{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(190,24,93,.15);margin-bottom:12px;}
+.preview-btns-bar{display:flex;gap:8px;}
+.btn-preview-cancel{flex:1;padding:13px;background:var(--pl);color:var(--p);border:2px solid var(--pb);border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+.btn-preview-ok{flex:2;padding:13px;background:linear-gradient(135deg,var(--p),var(--pm));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-preview-ok:disabled{opacity:.5;cursor:not-allowed;}
   </style>
 </head>
 <body>
@@ -284,6 +292,15 @@
     </div>
   </div>
 </div>
+  <div id="preview-overlay">
+  <div class="preview-wrap">
+    <div class="preview-nota" id="preview-content"></div>
+    <div class="preview-btns-bar">
+      <button class="btn-preview-cancel" onclick="cerrarPreview()">Cancelar</button>
+      <button class="btn-preview-ok" id="btn-preview-ok" onclick="confirmarEnvio()">Registrar Nota ✨</button>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -291,7 +308,7 @@ const AS_URL='https://script.google.com/macros/s/AKfycbwJhAO5anQhZ_tzZ7f6jSE133A
              
 // ── ESTADO ──────────────────────────────────────────────────────────
 let catalogo=[],artistas=[],currentResults=[],tabs=[],activeTabId=0,_nextTabId=1,_nextItemId=1;
-
+let _pendingPayload=null,_pendingTab=null;
 // ── TAB ─────────────────────────────────────────────────────────────
 function crearTab(){
   const hoy=new Date();
@@ -701,11 +718,7 @@ async function enviarNota(){
   }
   if(!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
 if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al menos un correo para el manual');
-  if(!confirm(`¿Registrar nota?\n${form.nombre_clienta.trim()} · $${fmtN(calcTotal())}`))return;
-  localStorage.setItem('yp_elaboro_id',tab.elaboro.id);
-  localStorage.setItem('yp_elaboro_alias',tab.elaboro.alias);
-  localStorage.setItem('yp_lugar',form.punto_venta);
-  const payload={
+    const payload={
     fecha:form.fecha,punto_venta:form.punto_venta,
     id_elaboro:tab.elaboro.id,alias_elaboro:tab.elaboro.alias,
     nombre_clienta:form.nombre_clienta.trim(),
@@ -721,6 +734,25 @@ if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al 
     total:calcTotal(),anticipo:tab.anticipo_activo?(tab.anticipo_monto||0):0,
     pagos:getPagosPayload(),comentarios:form.comentarios||'-',
   };
+  mostrarPreview(payload,tab);
+}
+function mostrarPreview(payload,tab){
+  _pendingPayload=payload;_pendingTab=tab;
+  document.getElementById('preview-content').innerHTML=buildPreviewHTML(payload);
+  const ov=document.getElementById('preview-overlay');
+  ov.style.display='flex';ov.scrollTop=0;
+}
+function cerrarPreview(){
+  document.getElementById('preview-overlay').style.display='none';
+  _pendingPayload=null;_pendingTab=null;
+}
+async function confirmarEnvio(){
+  if(!_pendingPayload||!_pendingTab)return;
+  const payload=_pendingPayload,tab=_pendingTab;
+  cerrarPreview();
+  localStorage.setItem('yp_elaboro_id',tab.elaboro.id);
+  localStorage.setItem('yp_elaboro_alias',tab.elaboro.alias);
+  localStorage.setItem('yp_lugar',tab.form.punto_venta);
   const btn=document.getElementById('btn-submit');
   btn.disabled=true;btn.textContent='Enviando...';
   try{
@@ -731,7 +763,61 @@ if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al 
   }catch(e){toast('❌ Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Registrar Nota ✨';}
 }
-
+function buildPreviewHTML(data){
+  const fecha=new Date(data.fecha+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const artistasUnicos=[...new Set(data.items.map(i=>i.alias_artista).filter(a=>a&&a!=='-'))];
+  const filas=data.items.map(item=>{
+    const prTag=item.promo&&item.promo!=='-'?`<br><span style="font-size:10px;color:#be185d;background:#fdf2f8;border-radius:4px;padding:1px 5px;">${esc(item.promo)}</span>`:'';
+    return `<tr>
+      <td style="padding:7px 5px;border-bottom:1px solid #fce7f3;font-size:12px;">${esc(item.descripcion)}${prTag}</td>
+      <td style="padding:7px 5px;border-bottom:1px solid #fce7f3;text-align:center;font-size:12px;">${item.cantidad}</td>
+      <td style="padding:7px 5px;border-bottom:1px solid #fce7f3;text-align:right;font-weight:700;color:#be185d;font-size:12px;">$${fmtN(item.importe)}</td>
+    </tr>`;
+  }).join('');
+  const pagoHtml=data.pagos.length===1?data.pagos[0].tipo:data.pagos.map(p=>`${p.tipo}: $${fmtN(p.monto)}`).join(' · ');
+  const totalSection=data.anticipo>0
+    ?`<div style="font-size:11px;color:#9ca3af;">Total: $${fmtN(data.total)}</div>
+      <div style="font-size:11px;color:#15803d;">Anticipo: −$${fmtN(data.anticipo)}</div>
+      <div style="font-size:20px;font-weight:700;color:#be185d;">$${fmtN(Math.max(0,data.total-data.anticipo))}</div>`
+    :`<div style="font-size:20px;font-weight:700;color:#be185d;">$${fmtN(data.total)}</div>`;
+  const emailsManual=data.emails_manual&&data.emails_manual.length?data.emails_manual:data.emails_nota;
+  const mismos=JSON.stringify(data.emails_nota)===JSON.stringify(emailsManual);
+  return `
+  <div style="background:linear-gradient(135deg,#be185d,#ec4899);padding:16px;text-align:center;">
+    <div style="color:#fff;font-size:16px;font-weight:700;letter-spacing:2px;">yiyi pash</div>
+    <div style="color:#fce7f3;font-size:10px;margin-top:2px;">Confirma antes de registrar</div>
+  </div>
+  <div style="background:#fdf2f8;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <div><span style="color:#9ca3af;font-size:9px;display:block;">Lugar</span><strong style="font-size:12px;">${esc(data.punto_venta)}</strong></div>
+    <div style="text-align:center;"><span style="color:#9ca3af;font-size:9px;display:block;">Fecha</span><strong style="font-size:12px;">${fecha}</strong></div>
+    <div style="text-align:right;"><span style="color:#9ca3af;font-size:9px;display:block;">Elaboró</span><strong style="font-size:12px;">${esc(data.alias_elaboro||'-')}</strong></div>
+  </div>
+  <div style="padding:10px 16px;border-bottom:1px solid #fce7f3;">
+    <strong style="font-size:15px;">${esc(data.nombre_clienta)}</strong>
+    ${artistasUnicos.length?`<div style="font-size:11px;color:#9ca3af;margin-top:2px;">Artista(s): ${artistasUnicos.map(a=>esc(a)).join(', ')}</div>`:''}
+  </div>
+  <div style="padding:10px 16px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#fdf2f8;">
+        <th style="padding:5px;text-align:left;color:#be185d;font-size:10px;">Descripción</th>
+        <th style="padding:5px;text-align:center;color:#be185d;font-size:10px;">Cant.</th>
+        <th style="padding:5px;text-align:right;color:#be185d;font-size:10px;">Importe</th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+  </div>
+  <div style="padding:10px 16px;background:#fdf2f8;border-top:2px solid #fce7f3;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+      <div style="font-size:11px;color:#6b7280;">${esc(pagoHtml)}</div>
+      <div style="text-align:right;">${totalSection}</div>
+    </div>
+    ${data.comentarios&&data.comentarios!=='-'?`<div style="font-size:11px;color:#9ca3af;margin-top:6px;font-style:italic;">${esc(data.comentarios)}</div>`:''}
+  </div>
+  <div style="padding:10px 16px;border-top:1px solid #fce7f3;">
+    <div style="font-size:11px;color:#9ca3af;margin-bottom:3px;">✉️ Nota: ${data.emails_nota.map(e=>esc(e)).join(', ')}</div>
+    <div style="font-size:11px;color:#9ca3af;">📋 Manual: ${mismos?'mismos correos':emailsManual.map(e=>esc(e)).join(', ')}</div>
+  </div>`;
+}
 function mostrarExito(notaNum,emailsNota){
   document.getElementById('s-nota').textContent=notaNum;
   const txt=emailsNota&&emailsNota.length
