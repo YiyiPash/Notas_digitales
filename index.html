@@ -68,7 +68,8 @@
     .item-name-input::placeholder{color:var(--mu);font-weight:400;}
     .item-del{width:24px;height:24px;border-radius:50%;background:#fee2e2;color:#b91c1c;border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     /* perfo toggle */
-    .perfo-wrap{margin-bottom:7px;}
+    .perfo-wrap{margin-bottom:7px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+    .perfo-select{padding:4px 6px;border:1.5px solid var(--p);border-radius:7px;background:#fff;color:var(--p);font-size:11px;font-weight:500;font-family:'Poppins',sans-serif;max-width:100%;}
     .perfo-toggle{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border:1.5px dashed var(--pb);border-radius:7px;background:transparent;cursor:pointer;font-size:11px;font-weight:500;color:var(--mu);transition:all .15s;font-family:'Poppins',sans-serif;}
     .perfo-toggle.on{border-color:var(--p);background:var(--pl);color:var(--p);border-style:solid;}
     .perfo-price{font-size:10px;}
@@ -452,6 +453,7 @@ function addItem(idx){
   const srv=src.servicio||null;
   getTab().items.push({
     id:_nextItemId++,sku:src.sku,sku_serv:srv?srv.sku:null,
+    sku_serv_default:srv?srv.sku:null,nombre_serv_default:srv?srv.nombre:'',precio_serv_default:srv?srv.precio:0,
     descripcion:src.nombre,desc_custom:false,nombre_prod:src.nombre,
     precio_prod:src.precio,precio_serv:srv?srv.precio:0,precio:src.precio,
     cantidad:1,promo:'',importe:src.precio,
@@ -477,6 +479,25 @@ function toggleServicio(id){
   item.con_servicio=!item.con_servicio;
   if(!item.desc_custom)item.descripcion=item.con_servicio?'Piercing '+item.nombre_prod:item.nombre_prod;
   item.precio=item.con_servicio?item.precio_prod+item.precio_serv:item.precio_prod;
+  recalcImporte(item);renderItems();
+}
+
+// Servicios que se pueden elegir para una pieza: los del mismo tipo que su
+// perforación ligada (mismo prefijo, ej. PIR-), según el catálogo de servicios.
+function opcionesServicio(item){
+  if(!item.sku_serv_default)return [];
+  const pref=item.sku_serv_default.split('-')[0]+'-';
+  const ops=catalogo.filter(c=>c.tipo==='S'&&String(c.sku).startsWith(pref))
+    .map(c=>({sku:c.sku,nombre:c.nombre,precio:c.precio}));
+  if(!ops.some(o=>o.sku===item.sku_serv_default))
+    ops.unshift({sku:item.sku_serv_default,nombre:item.nombre_serv_default||item.sku_serv_default,precio:item.precio_serv_default});
+  return ops;
+}
+function cambiarServicio(id,sku){
+  const item=getTab().items.find(i=>i.id===id);if(!item)return;
+  const op=opcionesServicio(item).find(o=>o.sku===sku);if(!op)return;
+  item.sku_serv=op.sku;item.precio_serv=op.precio;
+  if(item.con_servicio)item.precio=item.precio_prod+item.precio_serv;
   recalcImporte(item);renderItems();
 }
 
@@ -566,6 +587,10 @@ function renderItems(){
           <span>${item.con_servicio?'Perforación incluida':'+ Incluir perforación'}</span>
           <span class="perfo-price">+$${fmtN(item.precio_serv)}</span>
         </button>
+        ${item.con_servicio&&opcionesServicio(item).length>1?`
+        <select class="perfo-select" onchange="cambiarServicio(${item.id},this.value)" aria-label="Tipo de perforación">
+          ${opcionesServicio(item).map(o=>`<option value="${esc(o.sku)}" ${o.sku===item.sku_serv?'selected':''}>${esc(o.nombre)} · $${fmtN(o.precio)}</option>`).join('')}
+        </select>`:''}
       </div>`:'';
     const ahorro=item.descuento>0?Math.round((item.precio*item.cantidad-item.importe)*100)/100:0;
     const req=requiresArtista(item);
