@@ -156,6 +156,36 @@
 .btn-preview-cancel{flex:1;padding:13px;background:var(--pl);color:var(--p);border:2px solid var(--pb);border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
 .btn-preview-ok{flex:2;padding:13px;background:linear-gradient(135deg,var(--p),var(--pm));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 .btn-preview-ok:disabled{opacity:.5;cursor:not-allowed;}
+    /* ── PINK CLUB ── */
+    .pk-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .pk-head .items-lbl{margin:0;}
+    .pk-card{background:var(--pl);border:1.5px solid var(--pb);border-radius:10px;padding:8px 10px;margin-top:8px;}
+    .pk-card.paga{border-color:var(--p);}
+    .pk-top{display:flex;align-items:center;gap:6px;}
+    .pk-name{flex:1;min-width:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .pk-id{font-size:10px;color:var(--mu);font-weight:500;}
+    .pk-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;white-space:nowrap;}
+    .pk-Activa{background:#dcfce7;color:#15803d;}.pk-Registrada{background:#fef9c3;color:#92400e;}
+    .pk-Baja,.pk-Sin{background:#f3f4f6;color:#6b7280;}
+    .pk-info{font-size:11px;color:var(--mu);margin-top:3px;line-height:1.5;}
+    .pk-info b{color:var(--tx);}
+    .pk-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+    .pk-mini{padding:3px 8px;border:1.5px solid var(--pb);border-radius:6px;background:#fff;color:var(--p);font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;cursor:pointer;}
+    .pk-mini.on{background:var(--p);border-color:var(--p);color:#fff;}
+    .pk-resumen{font-size:11px;margin-top:8px;padding:6px 9px;border-radius:8px;background:#fff;border:1.5px dashed var(--pb);color:var(--mu);}
+    .pk-resumen.mal{border-color:#fca5a5;color:#b91c1c;}
+    .pk-row{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap;}
+    .pk-pts-in{width:64px;padding-left:6px;}
+    .pk-note{font-size:10px;color:var(--mu);}
+    .pk-regalo{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--p);font-weight:600;cursor:pointer;}
+    #pk-modal{display:none;position:fixed;inset:0;background:rgba(253,242,248,.97);z-index:600;overflow-y:auto;padding:16px;}
+    .pk-modal-card{max-width:480px;margin:0 auto;background:#fff;border-radius:20px;box-shadow:0 4px 32px rgba(190,24,93,.15);padding:16px;}
+    .pk-modal-card h3{font-size:15px;color:var(--p);margin-bottom:10px;}
+    .pk-modal-card .field{margin-bottom:9px;}
+    .pk-modal-card input[type=tel]{border:1.5px solid var(--pb);border-radius:8px;padding:8px 10px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;width:100%;}
+    .pk-check{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:7px 0;cursor:pointer;}
+    .pk-check input{margin-top:3px;accent-color:var(--p);}
+    .pk-menor{background:var(--pl);border-radius:10px;padding:9px;margin:6px 0 9px;}
   </style>
 </head>
 <body>
@@ -186,6 +216,23 @@
       <div class="field"><label>Fecha</label>
         <input type="date" id="fecha" onchange="saveField('fecha',this.value)">
       </div>
+    </div>
+  </div>
+
+  <!-- Pink Club -->
+  <div class="section" id="pink-section">
+    <div class="pk-head">
+      <span class="items-lbl">💗 Pink Club</span>
+      <button class="btn-preset" style="margin:0" onclick="pinkPedirClave(true)" id="pk-clave-btn">🔑 Clave</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">👤</span>
+      <input type="text" class="search-input" id="pk-search" placeholder="¿Ya eres Pink? Busca ID, nombre o WhatsApp" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="search-results" id="pk-results"></div>
+    </div>
+    <div id="pk-personas"></div>
+    <div class="btns-row">
+      <button class="btn-libre" onclick="pinkAbrirRegistro()">＋ Registrar nueva</button>
     </div>
   </div>
 
@@ -240,6 +287,7 @@
     <div class="btns-row">
       <button class="btn-libre" onclick="addItemLibre()">＋ Ítem libre</button>
       <button class="btn-libre" id="btn-aplicar" style="display:none" onclick="aplicarArtistaATodos()">↓ Artista del primero a todos</button>
+      <button class="btn-libre" id="btn-aplicar-rec" style="display:none" onclick="aplicarReceptoraATodos()">↓ 💗 Quien recibe del primero a todos</button>
     </div>
   </div>
 
@@ -302,6 +350,39 @@
     </div>
   </div>
 </div>
+<div id="pk-modal">
+  <div class="pk-modal-card">
+    <h3>💗 Registrar en el Pink Club</h3>
+    <div class="row2">
+      <div class="field"><label>Apodo</label><input type="text" id="pk-apodo" placeholder="Como le dicen"></div>
+      <div class="field"><label>Fecha de nacimiento</label><input type="date" id="pk-fn" onchange="pinkRevisarEdad()"></div>
+    </div>
+    <div class="field"><label>Nombre completo</label><input type="text" id="pk-nombre" placeholder="Nombre y apellidos"></div>
+    <div class="row2">
+      <div class="field"><label>WhatsApp (10 dígitos)</label><input type="tel" id="pk-wa" inputmode="numeric" placeholder="5512345678"></div>
+      <div class="field"><label>Correo (opcional)</label><input type="email" id="pk-email" placeholder="correo@ejemplo.com"></div>
+    </div>
+    <div class="field"><label>¿Cómo se registra?</label>
+      <select id="pk-origen"><option value="Consentimiento">Formulario de consentimiento</option><option value="Bazar">Bazar</option><option value="Manual" selected>Manual (en caja)</option></select>
+    </div>
+    <div id="pk-menor" class="pk-menor" style="display:none">
+      <div style="font-size:11px;font-weight:600;color:var(--p);margin-bottom:6px;" id="pk-menor-tit">Es menor de edad: datos del tutor</div>
+      <div class="field"><label>Nombre del tutor</label><input type="text" id="pk-tnombre"></div>
+      <div class="row2">
+        <div class="field"><label>Parentesco</label><input type="text" id="pk-tpar" placeholder="Madre, padre..."></div>
+        <div class="field"><label>WhatsApp del tutor</label><input type="tel" id="pk-twa" inputmode="numeric" placeholder="5512345678"></div>
+      </div>
+      <div class="field" id="pk-tid-wrap" style="display:none"><label>ID Pink del tutor (debe estar registrado)</label><input type="text" id="pk-tid" placeholder="AAA-0000" style="text-transform:uppercase"></div>
+    </div>
+    <label class="pk-check"><input type="checkbox" id="pk-c-aviso"> <span>Acepta el aviso de privacidad <b style="color:var(--p)">*</b></span></label>
+    <label class="pk-check" id="pk-c-mkt-wrap"><input type="checkbox" id="pk-c-mkt"> <span>Acepta recibir promociones por WhatsApp</span></label>
+    <label class="pk-check"><input type="checkbox" id="pk-c-fotos"> <span>Acepta que publiquemos fotos de sus perforaciones</span></label>
+    <div class="preview-btns-bar" style="margin-top:12px;">
+      <button class="btn-preview-cancel" onclick="pinkCerrarRegistro()">Cancelar</button>
+      <button class="btn-preview-ok" id="pk-reg-btn" onclick="pinkRegistrar()">Registrar 💗</button>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -324,6 +405,7 @@ function crearTab(){
       fecha:`${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`,
       nombre_clienta:'',comentarios:'',
     },
+    pink:{personas:[],paga:'',canje:false},   // Pink Club: clientas de esta nota
   };
   tabs.push(tab);return tab;
 }
@@ -360,6 +442,7 @@ function loadTabForm(tab){
   if(ab)ab.textContent=tab.anticipo_activo?'× Quitar anticipo':'+ Anticipo';
   if(am)am.value=tab.anticipo_monto;
   renderEmailChips();
+  renderPink();
   renderItems();renderPagoButtons();renderPagoMontos();updateTotal();renderTabBar();
 }
 
@@ -416,6 +499,12 @@ async function init(){
   if(inEN)inEN.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addEmailNota();}});
   const inEM=document.getElementById('input-email-manual');
   if(inEM)inEM.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addEmailManual();}});
+  // Pink Club: buscador de clientas (va al servidor, con pausa para no saturar)
+  const pk=document.getElementById('pk-search');
+  pk.addEventListener('input',()=>{clearTimeout(pk._t);pk._t=setTimeout(pinkBuscar,450);});
+  pk.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();clearTimeout(pk._t);pinkBuscar();}});
+  document.addEventListener('click',e=>{if(!e.target.closest('#pink-section .search-wrap'))document.getElementById('pk-results').classList.remove('open');});
+  renderPinkClaveBtn();
 }
 
 // ── BÚSQUEDA ────────────────────────────────────────────────────────
@@ -459,6 +548,7 @@ function addItem(idx){
     cantidad:1,promo:'',importe:src.precio,
     con_servicio:false,tiene_serv:!!srv,categoria:src.categoria,tipo:src.tipo,es_libre:false,
     descuento:0,importe_manual:false,id_artista:'',alias_artista:'',
+    id_receptora:getTab().pink.paga||'',puntos_aplicados:0,regalo_cumple:false,
   });
   document.getElementById('search-input').value='';closeSearch();renderItems();
 }
@@ -468,6 +558,7 @@ function addItemLibre(){
     nombre_prod:'',precio_prod:0,precio_serv:0,precio:0,
     cantidad:1,promo:'',importe:0,con_servicio:false,tiene_serv:false,categoria:'',tipo:'P',es_libre:true,
     descuento:0,importe_manual:false,id_artista:'',alias_artista:'',
+    id_receptora:getTab().pink.paga||'',puntos_aplicados:0,regalo_cumple:false,
   });
   renderItems();
   setTimeout(()=>{const ins=document.querySelectorAll('.item-name-input');if(ins.length)ins[ins.length-1].focus();},50);
@@ -554,9 +645,15 @@ function recalcImporte(item){
   if(item.importe_manual)return;
   item.importe=Math.round(item.precio*item.cantidad*(1-(item.descuento||0))*100)/100;
 }
-function calcTotal(){return getItems().reduce((s,i)=>s+i.importe,0);}
+function calcTotal(){return getItems().reduce((s,i)=>s+importeNeto(i),0);}
+// Lo que de verdad se cobra del artículo: sin la parte pagada con puntos ni la pieza de regalo
+function importeNeto(i){
+  if(i.regalo_cumple)return i.con_servicio?Math.round((i.precio_serv||0)*i.cantidad*100)/100:0;
+  return Math.max(0,Math.round((i.importe-(i.puntos_aplicados||0))*100)/100);
+}
 function calcSaldo(){const tab=getTab(),t=calcTotal();return tab.anticipo_activo?Math.max(0,t-(tab.anticipo_monto||0)):t;}
 function updateTotal(){
+  getItems().forEach(pinkClampItem);renderPinkResumen();
   const tab=getTab(),total=calcTotal(),bar=document.getElementById('total-bar');if(!bar)return;
   if(tab.anticipo_activo&&tab.anticipo_monto>0){
     const saldo=Math.max(0,total-tab.anticipo_monto);
@@ -575,6 +672,8 @@ function renderItems(){
   const btnAplicar=document.getElementById('btn-aplicar');
   if(!items.length){el.innerHTML='';if(btnAplicar)btnAplicar.style.display='none';updateTotal();return;}
   if(btnAplicar)btnAplicar.style.display=items.length>1?'inline-flex':'none';
+  const btnRec=document.getElementById('btn-aplicar-rec');
+  if(btnRec)btnRec.style.display=items.length>1&&getTab().pink.personas.length?'inline-flex':'none';
   el.innerHTML=items.map(item=>{
     const b=getBadge(item);
     const topLeft=item.es_libre
@@ -626,6 +725,7 @@ function renderItems(){
           ${artOpts}
         </select>
       </div>
+      ${pinkItemHTML(item)}
     </div>`;
   }).join('');
   updateTotal();
@@ -743,6 +843,9 @@ async function enviarNota(){
   }
   if(!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
 if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al menos un correo para el manual');
+  const errPink=pinkValidarAntesDeEnviar(tab);
+  if(errPink)return toast('⚠️ '+errPink);
+  const ptsCanje=pinkPuntosUsados(tab);
     const payload={
     fecha:form.fecha,punto_venta:form.punto_venta,
     id_elaboro:tab.elaboro.id,alias_elaboro:tab.elaboro.alias,
@@ -753,12 +856,15 @@ if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al 
       sku:i.sku,sku_serv:i.con_servicio?i.sku_serv:null,
       descripcion:i.descripcion||i.nombre_prod||'-',con_servicio:i.con_servicio,
       cantidad:i.cantidad,precio_prod:i.precio_prod,precio_serv:i.con_servicio?i.precio_serv:0,
-      precio:i.precio,promo:i.promo,importe:i.importe,tipo:i.tipo,
+      precio:i.precio,promo:i.promo,importe:importeNeto(i),tipo:i.tipo,
       id_artista:i.id_artista||'-',alias_artista:i.alias_artista||'-',
+      id_receptora:i.id_receptora||'',puntos_aplicados:i.regalo_cumple?0:(i.puntos_aplicados||0),regalo_cumple:!!i.regalo_cumple,
     })),
     total:calcTotal(),anticipo:tab.anticipo_activo?(tab.anticipo_monto||0):0,
     pagos:getPagosPayload(),comentarios:form.comentarios||'-',
+    id_paga:tab.pink.paga||'',puntos_canjeados:ptsCanje,id_canje:ptsCanje>0?tab.pink.paga:'',
   };
+  if(payload.id_paga||payload.items.some(i=>i.id_receptora))payload.clave=localStorage.getItem('yp_pink_clave')||'';
   mostrarPreview(payload,tab);
 }
 function mostrarPreview(payload,tab){
@@ -838,6 +944,7 @@ function buildPreviewHTML(data){
     </div>
     ${data.comentarios&&data.comentarios!=='-'?`<div style="font-size:11px;color:#9ca3af;margin-top:6px;font-style:italic;">${esc(data.comentarios)}</div>`:''}
   </div>
+  ${pinkPreviewHTML(data)}
   <div style="padding:10px 16px;border-top:1px solid #fce7f3;">
     <div style="font-size:11px;color:#9ca3af;margin-bottom:3px;">✉️ Nota: ${data.emails_nota.map(e=>esc(e)).join(', ')}</div>
     <div style="font-size:11px;color:#9ca3af;">📋 Manual: ${mismos?'mismos correos':emailsManual.map(e=>esc(e)).join(', ')}</div>
@@ -853,6 +960,249 @@ function mostrarExito(notaNum,emailsNota){
 }
 function nuevaNota(){cerrarExito();addTab();}
 function cerrarExito(){document.getElementById('success-overlay').style.display='none';loadTabForm(getTab());}
+
+// ── PINK CLUB ────────────────────────────────────────────────────────
+// La clave del equipo se guarda en este celular. Sin clave no se puede buscar, registrar ni mover puntos.
+let pinkUltimos=[];
+function pinkClave(){return localStorage.getItem('yp_pink_clave')||'';}
+function renderPinkClaveBtn(){const b=document.getElementById('pk-clave-btn');if(b)b.textContent=pinkClave()?'🔑 Clave ✓':'🔑 Poner clave';}
+async function pinkApi(action,data){
+  const body=Object.assign({action,clave:pinkClave()},data||{});
+  const res=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body),redirect:'follow'});
+  const json=await res.json();
+  if(!json.ok){
+    if(/Clave de equipo/i.test(json.error||'')){localStorage.removeItem('yp_pink_clave');renderPinkClaveBtn();}
+    throw new Error(json.error||'Error del servidor');
+  }
+  return json.data;
+}
+async function pinkPedirClave(forzar){
+  if(!forzar&&pinkClave())return true;
+  const c=prompt('Clave del equipo Pink Club:','');
+  if(c===null||!c.trim())return false;
+  try{
+    await pinkApi('pink_validar_clave',{clave:c.trim()});
+    localStorage.setItem('yp_pink_clave',c.trim());renderPinkClaveBtn();
+    toast('✅ Clave guardada en este celular');return true;
+  }catch(e){toast('❌ '+e.message);return false;}
+}
+function pinkEstadoCls(e){return ['Activa','Registrada','Baja'].includes(e)?e:'Sin';}
+
+// Buscar clienta (ID, nombre, apodo o WhatsApp)
+async function pinkBuscar(){
+  const inp=document.getElementById('pk-search'),box=document.getElementById('pk-results');
+  const q=inp.value.trim();
+  if(q.length<3){box.classList.remove('open');return;}
+  if(!pinkClave()&&!(await pinkPedirClave(false)))return;
+  box.innerHTML='<div class="no-r">Buscando...</div>';box.classList.add('open');
+  try{
+    const d=await pinkApi('pink_buscar',{q});
+    if(inp.value.trim()!==q)return;                     // ya escribió otra cosa
+    pinkUltimos=d.resultados||[];
+    box.innerHTML=pinkUltimos.length?pinkUltimos.map((p,i)=>`<div class="r-item" onmousedown="pinkAgregar(${i})">
+      <span class="r-badge pk-badge pk-${pinkEstadoCls(p.estado)}">${esc(p.id)}</span>
+      <div class="r-info"><div class="r-name">${esc(p.apodo)} · ${esc(p.nombre)}</div>
+        <div class="r-sku">${p.tipo==='Dependiente_menor_12'?'Menor de 12 · suma a '+esc(p.cuenta_id):esc(p.estado)+' · '+fmtN(p.saldo)+' pts'} · WA …${esc(p.wa_final)}</div></div>
+    </div>`).join(''):'<div class="no-r">No está registrada. Usa “＋ Registrar nueva”.</div>';
+  }catch(e){box.innerHTML=`<div class="no-r">❌ ${esc(e.message)}</div>`;}
+}
+function pinkAgregar(i){
+  const p=pinkUltimos[i];if(!p)return;
+  pinkAgregarPersona(p);
+  document.getElementById('pk-search').value='';
+  document.getElementById('pk-results').classList.remove('open');
+}
+function pinkAgregarPersona(p){
+  const tab=getTab(),pk=tab.pink;
+  const ya=pk.personas.findIndex(x=>x.id===p.id);
+  if(ya>=0)pk.personas[ya]=p;else pk.personas.push(p);
+  if(pk.personas.length===1)tab.items.forEach(it=>{if(!it.id_receptora)it.id_receptora=p.id;});  // la primera recibe todo
+  if(!pk.paga)pinkSetPaga(p.id,true);
+  renderPink();renderItems();
+}
+function pinkSetPaga(id,auto){
+  const tab=getTab(),pk=tab.pink;
+  pk.paga=id;pk.canje=false;tab.items.forEach(it=>{it.puntos_aplicados=0;});
+  const p=pk.personas.find(x=>x.id===id);
+  const nom=document.getElementById('nombre-clienta');
+  if(p&&!nom.value.trim()){nom.value=p.nombre;onNombre(p.nombre);}
+  if(!auto){renderPink();renderItems();}
+}
+function pinkQuitar(id){
+  const tab=getTab(),pk=tab.pink;
+  pk.personas=pk.personas.filter(x=>x.id!==id);
+  tab.items.forEach(it=>{if(it.id_receptora===id){it.id_receptora='';it.regalo_cumple=false;}});
+  if(pk.paga===id){pk.paga=pk.personas[0]?pk.personas[0].id:'';pk.canje=false;tab.items.forEach(it=>{it.puntos_aplicados=0;});}
+  renderPink();renderItems();
+}
+function pinkToggleCanje(){
+  const tab=getTab();tab.pink.canje=!tab.pink.canje;
+  if(!tab.pink.canje)tab.items.forEach(it=>{it.puntos_aplicados=0;});
+  renderPink();renderItems();
+}
+function renderPink(){
+  const tab=getTab(),el=document.getElementById('pk-personas');if(!tab||!el)return;
+  const pk=tab.pink;
+  el.innerHTML=pk.personas.map(p=>{
+    const esPaga=p.id===pk.paga,dep=p.tipo==='Dependiente_menor_12';
+    let info;
+    if(dep)info=`Menor de 12: sus compras suman en la cuenta de <b>${esc(p.cuenta_id)}</b>`;
+    else if(p.estado==='Activa')info=`<b>${fmtN(p.saldo)} pts</b> disponibles${p.vence?` · vencen el ${esc(p.vence)}`:''}`;
+    else if(p.estado==='Registrada')info=`<b>${fmtN(p.saldo)} pts</b> · le faltan <b>$${fmtN(p.falta_activar)}</b> en compras para activar y poder canjear`;
+    else info=esc(p.estado);
+    if(p.regalo_cumple)info+=`<br>🎁 <b>Tiene su regalo de cumpleaños</b>: márcalo en la pieza PAQ`;
+    const acts=[];
+    if(!esPaga)acts.push(`<button class="pk-mini" onclick="pinkSetPaga('${esc(p.id)}')">Ella paga</button>`);
+    if(esPaga&&p.puede_canjear)acts.push(`<button class="pk-mini ${pk.canje?'on':''}" onclick="pinkToggleCanje()">${pk.canje?'✓ Usando puntos':'Usar puntos'}</button>`);
+    acts.push(`<button class="pk-mini" onclick="pinkQuitar('${esc(p.id)}')">Quitar</button>`);
+    return `<div class="pk-card ${esPaga?'paga':''}">
+      <div class="pk-top"><div class="pk-name">${esc(p.apodo)} <span class="pk-id">${esc(p.id)}</span></div>
+        ${esPaga?'<span class="pk-badge" style="background:var(--p);color:#fff;">Paga</span>':''}
+        <span class="pk-badge pk-${dep?'Sin':pinkEstadoCls(p.estado)}">${dep?'Menor 12':esc(p.estado)}</span></div>
+      <div class="pk-info">${info}</div>
+      <div class="pk-acts">${acts.join('')}</div>
+    </div>`;
+  }).join('')+'<div id="pk-resumen"></div>';
+  renderPinkResumen();
+}
+function renderPinkResumen(){
+  const el=document.getElementById('pk-resumen');if(!el)return;
+  const tab=getTab(),pk=tab.pink;
+  if(!pk.canje){el.innerHTML='';return;}
+  const p=pk.personas.find(x=>x.id===pk.paga),usados=pinkPuntosUsados(tab),saldo=p?p.saldo:0;
+  el.innerHTML=`<div class="pk-resumen ${usados>saldo?'mal':''}">Usando <b>${fmtN(usados)}</b> de ${fmtN(saldo)} pts. Escribe los puntos en cada pieza (la perforación y los servicios no se pagan con puntos).</div>`;
+}
+
+// Por artículo: quién recibe, regalo de cumpleaños y puntos
+function pinkMaxPuntos(it){
+  if(it.tipo==='S'||it.regalo_cumple)return 0;
+  return Math.max(0,Math.floor(Math.min((it.precio_prod||0)*it.cantidad,it.importe||0)));
+}
+function pinkClampItem(it){it.puntos_aplicados=Math.min(Math.max(0,Math.floor(it.puntos_aplicados||0)),pinkMaxPuntos(it));}
+function pinkPuntosUsados(tab){return tab.items.reduce((s,i)=>s+(i.regalo_cumple?0:(i.puntos_aplicados||0)),0);}
+function pinkItemHTML(item){
+  const pk=getTab().pink;if(!pk.personas.length)return '';
+  const opts=pk.personas.map(p=>`<option value="${esc(p.id)}" ${item.id_receptora===p.id?'selected':''}>${esc(p.apodo)} · ${esc(p.id)}</option>`).join('');
+  let html=`<div class="artista-row"><span class="artista-lbl" style="color:var(--p)">💗 Recibe</span>
+    <select class="artista-sel" onchange="onItemReceptora(${item.id},this.value)"><option value="">Sin ID (no suma puntos)</option>${opts}</select></div>`;
+  const rec=pk.personas.find(p=>p.id===item.id_receptora);
+  if(rec&&rec.regalo_cumple&&String(item.sku||'').toUpperCase().startsWith('PAQ-')){
+    html+=`<div class="pk-row"><label class="pk-regalo"><input type="checkbox" ${item.regalo_cumple?'checked':''} onchange="onItemRegalo(${item.id},this.checked)" style="accent-color:var(--p)"> 🎁 Regalo de cumpleaños de ${esc(rec.apodo)}</label>
+      ${item.regalo_cumple?`<span class="pk-note">pieza sin costo${item.con_servicio?' · la perforación sí se cobra':''}</span>`:''}</div>`;
+  }
+  const max=pinkMaxPuntos(item);
+  if(pk.canje&&!item.regalo_cumple&&max>0){
+    html+=`<div class="pk-row"><span class="artista-lbl">Puntos</span>
+      <input class="mini-in pk-pts-in" type="number" inputmode="numeric" min="0" max="${max}" step="1" value="${item.puntos_aplicados||''}" placeholder="0" oninput="onItemPuntos(${item.id},this.value)">
+      <span class="pk-note">máx ${max} · paga <b id="pk-neto-${item.id}">$${fmtN(importeNeto(item))}</b></span></div>`;
+  }else if(pk.canje&&!item.regalo_cumple&&item.tipo==='S'){
+    html+=`<div class="pk-row"><span class="pk-note">Los servicios no se pagan con puntos</span></div>`;
+  }
+  return html;
+}
+function onItemReceptora(id,val){
+  const it=getTab().items.find(i=>i.id===id);if(!it)return;
+  it.id_receptora=val;it.regalo_cumple=false;renderItems();
+}
+function onItemRegalo(id,on){
+  const tab=getTab(),it=tab.items.find(i=>i.id===id);if(!it)return;
+  if(on&&it.cantidad!==1){toast('⚠️ El regalo es de una sola pieza: deja la cantidad en 1');renderItems();return;}
+  if(on&&tab.items.some(x=>x!==it&&x.regalo_cumple&&x.id_receptora===it.id_receptora)){toast('⚠️ Solo un regalo de cumpleaños por clienta');renderItems();return;}
+  it.regalo_cumple=on;if(on)it.puntos_aplicados=0;renderItems();
+}
+function onItemPuntos(id,val){
+  const it=getTab().items.find(i=>i.id===id);if(!it)return;
+  const max=pinkMaxPuntos(it),v=Math.max(0,Math.floor(Number(val)||0));
+  if(v>max){it.puntos_aplicados=max;toast(`⚠️ Máximo ${max} puntos en esta pieza`);renderItems();return;}
+  it.puntos_aplicados=v;
+  const n=document.getElementById('pk-neto-'+id);if(n)n.textContent='$'+fmtN(importeNeto(it));
+  updateTotal();
+}
+function aplicarReceptoraATodos(){
+  const items=getTab().items;if(items.length<2)return;
+  const f=items[0].id_receptora;
+  items.forEach((it,i)=>{if(i&&it.id_receptora!==f){it.id_receptora=f;it.regalo_cumple=false;}});
+  renderItems();toast(f?`✅ Todo suma a ${f}`:'✅ Ningún artículo suma puntos');
+}
+function pinkValidarAntesDeEnviar(tab){
+  const pk=tab.pink,usados=pinkPuntosUsados(tab);
+  if((pk.paga||tab.items.some(i=>i.id_receptora))&&!pinkClave())return 'Falta la clave del equipo (botón 🔑 en Pink Club)';
+  if(usados>0){
+    const p=pk.personas.find(x=>x.id===pk.paga);
+    if(!p||!p.puede_canjear)return 'Quien paga no puede canjear puntos';
+    if(usados>p.saldo)return `${p.apodo} solo tiene ${p.saldo} puntos`;
+  }
+  return '';
+}
+function pinkPreviewHTML(data){
+  const tab=_pendingTab||getTab();
+  const nom=id=>{const p=tab.pink.personas.find(x=>x.id===id);return p?`${p.apodo} (${id})`:id;};
+  const recs=[...new Set(data.items.map(i=>i.id_receptora).filter(Boolean))];
+  if(!recs.length&&!data.puntos_canjeados)return '';
+  const sinId=data.items.filter(i=>!i.id_receptora).length;
+  const l=[];
+  if(recs.length)l.push('💗 Suman puntos: '+recs.map(r=>esc(nom(r))).join(', '));
+  if(recs.length&&sinId)l.push(`${sinId} artículo(s) sin ID: no suman puntos`);
+  if(data.puntos_canjeados>0)l.push(`Canje: <b>${fmtN(data.puntos_canjeados)} pts</b> de ${esc(nom(data.id_canje))}`);
+  const reg=data.items.filter(i=>i.regalo_cumple);
+  if(reg.length)l.push('🎁 Regalo de cumpleaños: '+reg.map(i=>esc(i.descripcion)).join(', '));
+  return `<div style="padding:10px 16px;border-top:1px solid #fce7f3;font-size:11px;color:#be185d;line-height:1.6;">${l.join('<br>')}</div>`;
+}
+
+// Registro de clienta nueva (desde caja)
+function pinkEdadDe(s){
+  const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return null;
+  const h=new Date();let e=h.getFullYear()-(+m[1]);
+  if(h.getMonth()+1<+m[2]||(h.getMonth()+1===+m[2]&&h.getDate()<+m[3]))e--;
+  return e;
+}
+function pinkRevisarEdad(){
+  const ed=pinkEdadDe(document.getElementById('pk-fn').value);
+  const menor=ed!==null&&ed<18,peque=ed!==null&&ed<12;
+  document.getElementById('pk-menor').style.display=menor?'block':'none';
+  document.getElementById('pk-tid-wrap').style.display=peque?'block':'none';
+  document.getElementById('pk-c-mkt-wrap').style.display=menor?'none':'flex';
+  document.getElementById('pk-menor-tit').textContent=peque
+    ?'Menor de 12: no tiene cuenta propia, sus compras suman en la cuenta del tutor'
+    :'Es menor de edad: datos del tutor (no recibe promociones)';
+}
+function pinkAbrirRegistro(){
+  if(!pinkClave()){pinkPedirClave(false).then(ok=>{if(ok)pinkAbrirRegistro();});return;}
+  ['pk-apodo','pk-nombre','pk-fn','pk-wa','pk-email','pk-tnombre','pk-tpar','pk-twa','pk-tid'].forEach(id=>{document.getElementById(id).value='';});
+  ['pk-c-aviso','pk-c-mkt','pk-c-fotos'].forEach(id=>{document.getElementById(id).checked=false;});
+  const tab=getTab(),p=tab.pink.personas.find(x=>x.id===tab.pink.paga);
+  if(p&&p.tipo==='Titular'){document.getElementById('pk-tid').value=p.id;document.getElementById('pk-tnombre').value=p.nombre;}
+  pinkRevisarEdad();
+  document.getElementById('pk-modal').style.display='block';
+  document.getElementById('pk-apodo').focus();
+}
+function pinkCerrarRegistro(){document.getElementById('pk-modal').style.display='none';}
+async function pinkRegistrar(){
+  const v=id=>document.getElementById(id).value.trim();
+  const ed=pinkEdadDe(v('pk-fn'));
+  const d={apodo:v('pk-apodo'),nombre_completo:v('pk-nombre'),fecha_nacimiento:v('pk-fn'),whatsapp:v('pk-wa'),email:v('pk-email'),
+    origen:v('pk-origen'),registro_por:getTab().elaboro.alias||'',
+    consent_aviso:document.getElementById('pk-c-aviso').checked,
+    consent_marketing_wa:ed!==null&&ed>=18&&document.getElementById('pk-c-mkt').checked,
+    consent_fotos:document.getElementById('pk-c-fotos').checked};
+  if(ed!==null&&ed<18)Object.assign(d,{tutor_nombre:v('pk-tnombre'),tutor_parentesco:v('pk-tpar'),tutor_whatsapp:v('pk-twa'),id_tutor:ed<12?v('pk-tid').toUpperCase():''});
+  if(!d.apodo||!d.nombre_completo||!d.fecha_nacimiento)return toast('⚠️ Faltan apodo, nombre completo o fecha de nacimiento');
+  if(d.whatsapp.replace(/\D/g,'').length!==10)return toast('⚠️ El WhatsApp debe tener 10 dígitos');
+  if(!d.consent_aviso)return toast('⚠️ Debe aceptar el aviso de privacidad');
+  const btn=document.getElementById('pk-reg-btn');btn.disabled=true;btn.textContent='Registrando...';
+  try{
+    const r=await pinkApi('pink_registrar',d);
+    const b=await pinkApi('pink_buscar',{q:r.id_clienta});
+    const p=(b.resultados||[]).find(x=>x.id===r.id_clienta);
+    if(p)pinkAgregarPersona(p);
+    pinkCerrarRegistro();
+    if(r.duplicada)alert(`Ya estaba registrada con el ID ${r.id_clienta}. La agregué a la nota.`);
+    else alert(`✅ Registrada: ${r.id_clienta}`+
+      (r.tipo==='Dependiente_menor_12'?'\n\nEs menor de 12: sus compras suman en la cuenta de su tutor.':'\n\nSu mensaje de bienvenida con el ID quedó en Pendientes_WA para mandarlo por WhatsApp.')+
+      (r.historial_sugerido?`\n\nEncontré ${r.historial_sugerido} nota(s) anteriores que podrían ser suyas: revísalas en Historial_Por_Vincular.`:''));
+  }catch(e){toast('❌ '+e.message);}
+  finally{btn.disabled=false;btn.textContent='Registrar 💗';}
+}
 
 // ── DROPDOWNS ────────────────────────────────────────────────────────
 function poblarLugares(lista){
