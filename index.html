@@ -1025,7 +1025,8 @@ function pinkSetPaga(id,auto){
   pk.paga=id;pk.canje=false;tab.items.forEach(it=>{it.puntos_aplicados=0;});
   const p=pk.personas.find(x=>x.id===id);
   const nom=document.getElementById('nombre-clienta');
-  if(p&&!nom.value.trim()){nom.value=p.nombre;onNombre(p.nombre);}
+  const nomNota=p?(p.apodo||p.nombre):'';                 // en la nota va el apodo
+  if(p&&!nom.value.trim()){nom.value=nomNota;onNombre(nomNota);}
   if(!auto){renderPink();renderItems();}
 }
 function pinkQuitar(id){
