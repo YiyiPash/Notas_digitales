@@ -505,7 +505,45 @@ async function init(){
   pk.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();clearTimeout(pk._t);pinkBuscar();}});
   document.addEventListener('click',e=>{if(!e.target.closest('#pink-section .search-wrap'))document.getElementById('pk-results').classList.remove('open');});
   renderPinkClaveBtn();
+  tomarDelConsentimiento();
 }
+
+// ── VIENE DEL CONSENTIMIENTO ────────────────────────────────────────
+// El consentimiento deja los datos en este celular (yp_handoff) y abre la nota con ?desde=consentimiento.
+async function tomarDelConsentimiento(){
+  if(!/[?&]desde=consentimiento/.test(location.search))return;
+  let h=null;
+  try{h=JSON.parse(localStorage.getItem('yp_handoff')||'null');}catch(e){}
+  localStorage.removeItem('yp_handoff');
+  history.replaceState(null,'',location.pathname);
+  if(!h||h.desde!=='consentimiento')return;
+  const tab=getTab();
+  if(h.email&&!tab.emails_nota.includes(h.email)){tab.emails_nota.push(h.email);renderEmailChips();}
+  if(h.id_consent&&!tab.form.comentarios){tab.form.comentarios='Consentimiento '+h.id_consent;document.getElementById('comentarios').value=tab.form.comentarios;}
+  tab.consent={id:h.id_consent,perforaciones:h.perforaciones||[]};
+  renderItems();
+  try{
+    const d=await pinkApi('pink_buscar',{q:h.id_clienta});
+    const p=(d.resultados||[]).find(x=>x.id===h.id_clienta);
+    if(p)pinkAgregarPersona(p);
+  }catch(e){toast('⚠️ '+e.message);}
+  const nom=document.getElementById('nombre-clienta');
+  if(!nom.value.trim()&&h.apodo){nom.value=h.apodo;onNombre(h.apodo);}
+}
+// Aviso arriba de los artículos: qué perforaciones del consentimiento faltan por cobrar
+function renderConsentAviso(){
+  const tab=getTab(),list=document.getElementById('items-list');if(!list)return;
+  let box=document.getElementById('consent-aviso');
+  const c=tab&&tab.consent;
+  if(!c||!c.perforaciones.length){if(box)box.remove();return;}
+  if(!box){box=document.createElement('div');box.id='consent-aviso';list.parentNode.insertBefore(box,list);}
+  const cobradas=tab.items.filter(i=>i.con_servicio).reduce((s,i)=>s+(Number(i.cantidad)||1),0);
+  const zonas=c.perforaciones.map(x=>esc(x.zona)+(x.lado&&x.lado!=='Centro'?' '+esc(x.lado.toLowerCase()):'')).join(' · ');
+  box.style.cssText='background:#fef3c7;color:#92400e;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px;';
+  box.innerHTML=`<b>Del consentimiento ${esc(c.id)}:</b> ${zonas}<br>Elige la pieza de cada una con su perforación incluida (${cobradas} de ${c.perforaciones.length}).`;
+}
+const _renderItemsSinAviso=renderItems;
+renderItems=function(){_renderItemsSinAviso();renderConsentAviso();};
 
 // ── BÚSQUEDA ────────────────────────────────────────────────────────
 function onSearch(){
