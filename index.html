@@ -537,7 +537,7 @@ async function tomarDelConsentimiento(){
 // El tatuaje no lleva pieza: su línea entra sola con el tamaño y la artista que se eligieron en el consentimiento
 function agregarTatuaje(t){
   const src=catalogo.find(i=>i.sku===t.sku_serv);
-  const it=src?itemDeCatalogo(src):itemLibre();
+  const it=src?itemDeCatalogo(src):Object.assign(itemLibre(),{categoria:'Tatuaje'});
   const desc=t.zona+(src?' · '+src.nombre:'')+(t.tipo==='Retoque'?' · Retoque':'');
   Object.assign(it,{descripcion:desc,desc_custom:true,tipo:'S'});
   const a=artistas.find(x=>x.alias===t.perforadora);
@@ -699,6 +699,18 @@ function aplicarArtistaATodos(){
   renderItems();toast(`✅ Artista "${first.alias_artista}" aplicado a todos`);
 }
 function requiresArtista(item){return item.con_servicio||item.tipo==='S';}
+// Todo servicio lleva clienta con ID, porque necesita seguimiento. Los ítems libres se reconocen por SKU o por su texto.
+function esServicio(i){
+  return requiresArtista(i)||/^(PIR|TAT|REP|RET)-/i.test(i.sku||'')||(i.es_libre&&/perforaci|tatuaje|revisi/i.test(i.descripcion||''));
+}
+// Qué manual de cuidados lleva la línea. Las revisiones no llevan.
+function tipoManual(i){
+  const d=i.es_libre?(i.descripcion||''):'';
+  if(/^(REP|RET)-/i.test(i.sku||'')||/revisi/i.test(d))return '';
+  if(/^TAT-/i.test(i.sku||'')||(i.tipo==='S'&&i.categoria==='Tatuaje')||(i.es_libre&&i.categoria==='Tatuaje')||/tatuaje/i.test(d))return 'tatuaje';
+  if(i.con_servicio||/^PIR-/i.test(i.sku||'')||/perforaci/i.test(d))return 'perforacion';
+  return '';
+}
 function recalcImporte(item){
   if(item.importe_manual)return;
   item.importe=Math.round(item.precio*item.cantidad*(1-(item.descuento||0))*100)/100;
@@ -899,6 +911,11 @@ async function enviarNota(){
     const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0),saldo=calcSaldo();
     if(Math.abs(suma-saldo)>0.5)return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el saldo ($${fmtN(saldo)})`);
   }
+  if(tab.items.some(esServicio)){
+    if(tab.publico)return toast('⚠️ Público general es solo para productos. Esta nota lleva un servicio: elige a la clienta');
+    const sinId=tab.items.find(i=>esServicio(i)&&!i.id_receptora&&!tab.pink.paga);
+    if(sinId)return toast('⚠️ Esta nota lleva un servicio: elige a la clienta en Pink Club');
+  }
   if(!tab.publico&&!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
 if(!tab.publico&&!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al menos un correo para el manual');
   const errPink=pinkValidarAntesDeEnviar(tab);
@@ -912,7 +929,7 @@ if(!tab.publico&&!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠
     emails_manual:tab.manual_mismo?tab.emails_nota:tab.emails_manual,
     items:tab.items.map(i=>({
       sku:i.sku,sku_serv:i.con_servicio?i.sku_serv:null,
-      descripcion:i.descripcion||i.nombre_prod||'-',con_servicio:i.con_servicio,
+      descripcion:i.descripcion||i.nombre_prod||'-',con_servicio:i.con_servicio,manual:tipoManual(i),
       cantidad:i.cantidad,precio_prod:i.precio_prod,precio_serv:i.con_servicio?i.precio_serv:0,
       precio:i.precio,promo:i.promo,importe:importeNeto(i),tipo:i.tipo,
       id_artista:i.id_artista||'-',alias_artista:i.alias_artista||'-',
