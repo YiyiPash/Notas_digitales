@@ -243,10 +243,11 @@
     </div>
     <div class="field" style="margin-bottom:10px;"><label>Nombre clienta</label>
       <input type="text" id="nombre-clienta" placeholder="Nombre..." oninput="onNombre(this.value)">
+      <button class="btn-preset" id="btn-publico" type="button" onclick="togglePublico()">＋ Público general</button>
     </div>
     <!-- Correos nota -->
     <div class="field" style="margin-bottom:11px;">
-      <label>Nota digital — correos <span style="font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0;font-size:10px;">(requerido)</span></label>
+      <label>Nota digital — correos <span id="correo-req" style="font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0;font-size:10px;">(requerido)</span></label>
       <div class="chips-wrap" id="chips-nota"></div>
 <div class="email-add-row">
   <input type="email" class="email-add-input" id="input-email-nota" placeholder="correo@ejemplo.com" autocomplete="email">
@@ -406,6 +407,7 @@ function crearTab(){
       nombre_clienta:'',comentarios:'',
     },
     pink:{personas:[],paga:'',canje:false},   // Pink Club: clientas de esta nota
+    publico:false,                            // venta a público general: sin correo y sin Pink Club
   };
   tabs.push(tab);return tab;
 }
@@ -442,6 +444,7 @@ function loadTabForm(tab){
   if(ab)ab.textContent=tab.anticipo_activo?'× Quitar anticipo':'+ Anticipo';
   if(am)am.value=tab.anticipo_monto;
   renderEmailChips();
+  renderPublico();
   renderPink();
   renderItems();renderPagoButtons();renderPagoMontos();updateTotal();renderTabBar();
 }
@@ -520,7 +523,8 @@ async function tomarDelConsentimiento(){
   const tab=getTab();
   if(h.email&&!tab.emails_nota.includes(h.email)){tab.emails_nota.push(h.email);renderEmailChips();}
   if(h.id_consent&&!tab.form.comentarios){tab.form.comentarios='Consentimiento '+h.id_consent;document.getElementById('comentarios').value=tab.form.comentarios;}
-  tab.consent={id:h.id_consent,perforaciones:h.perforaciones||[]};
+  tab.consent={id:h.id_consent,perforaciones:h.perforaciones||[],tatuaje:h.servicio==='Tatuaje'};
+  if(tab.consent.tatuaje)tab.consent.perforaciones.forEach(agregarTatuaje);
   renderItems();
   try{
     const d=await pinkApi('pink_buscar',{q:h.id_clienta});
@@ -529,6 +533,16 @@ async function tomarDelConsentimiento(){
   }catch(e){toast('⚠️ '+e.message);}
   const nom=document.getElementById('nombre-clienta');
   if(!nom.value.trim()&&h.apodo){nom.value=h.apodo;onNombre(h.apodo);}
+}
+// El tatuaje no lleva pieza: su línea entra sola con el tamaño y la artista que se eligieron en el consentimiento
+function agregarTatuaje(t){
+  const src=catalogo.find(i=>i.sku===t.sku_serv);
+  const it=src?itemDeCatalogo(src):itemLibre();
+  const desc=t.zona+(src?' · '+src.nombre:'')+(t.tipo==='Retoque'?' · Retoque':'');
+  Object.assign(it,{descripcion:desc,desc_custom:true,tipo:'S'});
+  const a=artistas.find(x=>x.alias===t.perforadora);
+  if(a){it.id_artista=a.id;it.alias_artista=a.alias;}
+  getTab().items.push(it);
 }
 // Aviso arriba de los artículos: qué perforaciones del consentimiento faltan por cobrar
 function renderConsentAviso(){
@@ -540,7 +554,7 @@ function renderConsentAviso(){
   const cobradas=tab.items.filter(i=>i.con_servicio).reduce((s,i)=>s+(Number(i.cantidad)||1),0);
   const zonas=c.perforaciones.map(x=>esc(x.zona)+(x.lado&&x.lado!=='Centro'?' '+esc(x.lado.toLowerCase()):'')).join(' · ');
   box.style.cssText='background:#fef3c7;color:#92400e;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px;';
-  box.innerHTML=`<b>Del consentimiento ${esc(c.id)}:</b> ${zonas}<br>Elige la pieza de cada una con su perforación incluida (${cobradas} de ${c.perforaciones.length}).`;
+  box.innerHTML=`<b>Del consentimiento ${esc(c.id)}:</b> ${zonas}<br>`+(c.tatuaje?'Ya está en la nota. Revisa la artista y el precio.':`Elige la pieza de cada una con su perforación incluida (${cobradas} de ${c.perforaciones.length}).`);
 }
 const _renderItemsSinAviso=renderItems;
 renderItems=function(){_renderItemsSinAviso();renderConsentAviso();};
@@ -577,8 +591,12 @@ function closeSearch(){document.getElementById('search-results').classList.remov
 // ── ÍTEMS ───────────────────────────────────────────────────────────
 function addItem(idx){
   const src=currentResults[idx];if(!src)return;
+  getTab().items.push(itemDeCatalogo(src));
+  document.getElementById('search-input').value='';closeSearch();renderItems();
+}
+function itemDeCatalogo(src){
   const srv=src.servicio||null;
-  getTab().items.push({
+  return {
     id:_nextItemId++,sku:src.sku,sku_serv:srv?srv.sku:null,
     sku_serv_default:srv?srv.sku:null,nombre_serv_default:srv?srv.nombre:'',precio_serv_default:srv?srv.precio:0,
     descripcion:src.nombre,desc_custom:false,nombre_prod:src.nombre,
@@ -587,19 +605,21 @@ function addItem(idx){
     con_servicio:false,tiene_serv:!!srv,categoria:src.categoria,tipo:src.tipo,es_libre:false,
     descuento:0,importe_manual:false,id_artista:'',alias_artista:'',
     id_receptora:getTab().pink.paga||'',puntos_aplicados:0,regalo_cumple:false,
-  });
-  document.getElementById('search-input').value='';closeSearch();renderItems();
+  };
 }
 function addItemLibre(){
-  getTab().items.push({
+  getTab().items.push(itemLibre());
+  renderItems();
+  setTimeout(()=>{const ins=document.querySelectorAll('.item-name-input');if(ins.length)ins[ins.length-1].focus();},50);
+}
+function itemLibre(){
+  return {
     id:_nextItemId++,sku:'',sku_serv:null,descripcion:'',desc_custom:true,
     nombre_prod:'',precio_prod:0,precio_serv:0,precio:0,
     cantidad:1,promo:'',importe:0,con_servicio:false,tiene_serv:false,categoria:'',tipo:'P',es_libre:true,
     descuento:0,importe_manual:false,id_artista:'',alias_artista:'',
     id_receptora:getTab().pink.paga||'',puntos_aplicados:0,regalo_cumple:false,
-  });
-  renderItems();
-  setTimeout(()=>{const ins=document.querySelectorAll('.item-name-input');if(ins.length)ins[ins.length-1].focus();},50);
+  };
 }
 function removeItem(id){const t=getTab();t.items=t.items.filter(i=>i.id!==id);renderItems();}
 
@@ -879,8 +899,8 @@ async function enviarNota(){
     const suma=tab.pagosActivos.reduce((s,t)=>s+(tab.pagosMontos[t]||0),0),saldo=calcSaldo();
     if(Math.abs(suma-saldo)>0.5)return toast(`⚠️ Los pagos ($${fmtN(suma)}) no suman el saldo ($${fmtN(saldo)})`);
   }
-  if(!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
-if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al menos un correo para el manual');
+  if(!tab.publico&&!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
+if(!tab.publico&&!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al menos un correo para el manual');
   const errPink=pinkValidarAntesDeEnviar(tab);
   if(errPink)return toast('⚠️ '+errPink);
   const ptsCanje=pinkPuntosUsados(tab);
@@ -902,7 +922,8 @@ if(!tab.manual_mismo&&!tab.emails_manual.length) return toast('⚠️ Agrega al 
     pagos:getPagosPayload(),comentarios:form.comentarios||'-',
     id_paga:tab.pink.paga||'',puntos_canjeados:ptsCanje,id_canje:ptsCanje>0?tab.pink.paga:'',
   };
-  if(payload.id_paga||payload.items.some(i=>i.id_receptora))payload.clave=localStorage.getItem('yp_pink_clave')||'';
+  if(tab.consent)payload.id_consent=tab.consent.id;   // el servidor escribe el número de nota en su expediente
+  if(payload.id_consent||payload.id_paga||payload.items.some(i=>i.id_receptora))payload.clave=localStorage.getItem('yp_pink_clave')||'';
   mostrarPreview(payload,tab);
 }
 function mostrarPreview(payload,tab){
@@ -984,8 +1005,8 @@ function buildPreviewHTML(data){
   </div>
   ${pinkPreviewHTML(data)}
   <div style="padding:10px 16px;border-top:1px solid #fce7f3;">
-    <div style="font-size:11px;color:#9ca3af;margin-bottom:3px;">✉️ Nota: ${data.emails_nota.map(e=>esc(e)).join(', ')}</div>
-    <div style="font-size:11px;color:#9ca3af;">📋 Manual: ${mismos?'mismos correos':emailsManual.map(e=>esc(e)).join(', ')}</div>
+    ${data.emails_nota.length?`<div style="font-size:11px;color:#9ca3af;margin-bottom:3px;">✉️ Nota: ${data.emails_nota.map(e=>esc(e)).join(', ')}</div>
+    <div style="font-size:11px;color:#9ca3af;">📋 Manual: ${mismos?'mismos correos':emailsManual.map(e=>esc(e)).join(', ')}</div>`:'<div style="font-size:11px;color:#9ca3af;">✉️ Sin correo: solo copia al estudio</div>'}
   </div>`;
 }
 function mostrarExito(notaNum,emailsNota){
@@ -1052,6 +1073,7 @@ function pinkAgregar(i){
 }
 function pinkAgregarPersona(p){
   const tab=getTab(),pk=tab.pink;
+  if(tab.publico)togglePublico();              // si ya tiene ID, deja de ser público general
   const ya=pk.personas.findIndex(x=>x.id===p.id);
   if(ya>=0)pk.personas[ya]=p;else pk.personas.push(p);
   if(pk.personas.length===1)tab.items.forEach(it=>{if(!it.id_receptora)it.id_receptora=p.id;});  // la primera recibe todo
@@ -1089,7 +1111,7 @@ function renderPink(){
     else if(p.estado==='Activa')info=`<b>${fmtN(p.saldo)} pts</b> disponibles${p.vence?` · vencen el ${esc(p.vence)}`:''}`;
     else if(p.estado==='Registrada')info=`<b>${fmtN(p.saldo)} pts</b> · le faltan <b>$${fmtN(p.falta_activar)}</b> en compras para activar y poder canjear`;
     else info=esc(p.estado);
-    if(p.regalo_cumple)info+=`<br>🎁 <b>Tiene su regalo de cumpleaños</b>: márcalo en la pieza PAQ`;
+    if(p.regalo_cumple)info+=`<br>🎁 <b>Tiene su regalo de cumpleaños</b>: márcalo en la pieza de regalo (hasta $140)`;
     const acts=[];
     if(!esPaga)acts.push(`<button class="pk-mini" onclick="pinkSetPaga('${esc(p.id)}')">Ella paga</button>`);
     if(esPaga&&p.puede_canjear)acts.push(`<button class="pk-mini ${pk.canje?'on':''}" onclick="pinkToggleCanje()">${pk.canje?'✓ Usando puntos':'Usar puntos'}</button>`);
@@ -1125,7 +1147,7 @@ function pinkItemHTML(item){
   let html=`<div class="artista-row"><span class="artista-lbl" style="color:var(--p)">💗 Recibe</span>
     <select class="artista-sel" onchange="onItemReceptora(${item.id},this.value)"><option value="">Sin ID (no suma puntos)</option>${opts}</select></div>`;
   const rec=pk.personas.find(p=>p.id===item.id_receptora);
-  if(rec&&rec.regalo_cumple&&String(item.sku||'').toUpperCase().startsWith('PAQ-')){
+  if(rec&&rec.regalo_cumple&&item.tipo!=='S'){   // pieza sorpresa Pink: cualquier producto; el servidor revisa el tope
     html+=`<div class="pk-row"><label class="pk-regalo"><input type="checkbox" ${item.regalo_cumple?'checked':''} onchange="onItemRegalo(${item.id},this.checked)" style="accent-color:var(--p)"> 🎁 Regalo de cumpleaños de ${esc(rec.apodo)}</label>
       ${item.regalo_cumple?`<span class="pk-note">pieza sin costo${item.con_servicio?' · la perforación sí se cobra':''}</span>`:''}</div>`;
   }
@@ -1272,6 +1294,24 @@ function onElabora(sel){
 function onNombre(val){
   const tab=getTab();if(!tab)return;
   tab.form.nombre_clienta=val;tab.label=val.trim()||`Nota ${tab.id}`;renderTabBar();
+  if(tab.publico&&val!==PUBLICO){tab.publico=false;renderPublico();}   // escribieron otro nombre
+}
+// Público general: venta sin datos de clienta. No pide correo ni lleva ID; la copia al estudio llega igual.
+const PUBLICO='Público general';
+function togglePublico(){
+  const tab=getTab();if(!tab)return;
+  if(!tab.publico&&tab.pink.personas.length)return toast('⚠️ Esta nota ya tiene clienta del Pink Club');
+  tab.publico=!tab.publico;
+  const nom=document.getElementById('nombre-clienta');
+  nom.value=tab.publico?PUBLICO:'';onNombre(nom.value);
+  renderPublico();
+}
+function renderPublico(){
+  const tab=getTab(),b=document.getElementById('btn-publico'),r=document.getElementById('correo-req');
+  if(!tab||!b)return;
+  b.textContent=tab.publico?'✓ Público general (toca para quitar)':'＋ Público general';
+  b.style.cssText=tab.publico?'border-style:solid;border-color:var(--p);color:var(--p);font-weight:600;':'';
+  if(r)r.textContent=tab.publico?'(opcional)':'(requerido)';
 }
 
 // ── UTILS ────────────────────────────────────────────────────────────
