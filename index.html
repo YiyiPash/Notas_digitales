@@ -149,6 +149,7 @@
     .btn-preset{display:inline-flex;align-items:center;padding:3px 9px;border:1.5px dashed var(--pb);border-radius:6px;background:transparent;color:var(--mu);font-family:'Poppins',sans-serif;font-size:10px;cursor:pointer;transition:all .15s;margin-top:4px;}
 .btn-preset:hover{border-color:var(--p);color:var(--p);}
     /* ── PREVIEW OVERLAY ── */
+#ir-inicio{display:inline-block;margin:0 0 8px;font-size:13px;font-weight:600;color:var(--p);text-decoration:none;}
 #btn-cobrar{display:flex;width:100%;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;padding:10px 12px;border:1.5px solid var(--p);border-radius:10px;background:#fff;color:var(--p);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
 #btn-cobrar.hay{background:var(--p);color:#fff;}
 #cobrar-overlay{display:none;position:fixed;inset:0;background:rgba(253,242,248,.98);z-index:500;padding:16px;overflow-y:auto;}
@@ -210,6 +211,7 @@
 </div>
 
 <div id="form-screen" style="display:none">
+<a id="ir-inicio" href="../Consentimientos/inicio.html" onclick="return salirAInicio()">← Inicio</a>
 <button id="btn-cobrar" type="button" onclick="abrirPorCobrar()">📋 Por cobrar</button>
 <div class="card">
   <div class="nota-header">
@@ -527,6 +529,7 @@ async function init(){
   tomarDelConsentimiento();
   cargarPorCobrar();
   setInterval(()=>{if(!document.hidden)cargarPorCobrar();},60000);
+  if(/[?&]ver=cobrar/.test(location.search)){history.replaceState(null,'',location.pathname);abrirPorCobrar();}
 }
 
 // ── VIENE DEL CONSENTIMIENTO ────────────────────────────────────────
@@ -584,6 +587,11 @@ async function abrirPorCobrar(){
     const cuando=(c.fecha===iso?'Hoy':c.fecha.split('-').reverse().join('/'))+(c.hora?' '+c.hora:'');
     return `<button class="cobrar-item" type="button" onclick="elegirPorCobrar(${i})"><b>${esc(c.apodo||c.nombre)}</b><span>${esc(zonas)}</span><span>${esc([cuando,c.lugar,c.atendio?'atendió '+c.atendio:''].filter(Boolean).join(' · '))}</span></button>`;
   }).join('');
+}
+// Las notas sin registrar viven solo en esta página: avisar antes de salir
+function salirAInicio(){
+  saveCurrentForm();
+  return !tabs.some(t=>t.items.length&&!t.registrada)||confirm('Tienes una nota sin registrar y se va a perder. ¿Salir al Inicio?');
 }
 function cerrarPorCobrar(){document.getElementById('cobrar-overlay').style.display='none';}
 async function elegirPorCobrar(i){
@@ -1026,7 +1034,7 @@ async function confirmarEnvio(){
   try{
     const res=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload),redirect:'follow'});
     const json=await res.json();
-    if(json.ok)mostrarExito(json.data.nota,tab.emails_nota);
+    if(json.ok){tab.registrada=true;mostrarExito(json.data.nota,tab.emails_nota);}
     else throw new Error(json.error||'Error del servidor');
   }catch(e){toast('❌ Error: '+e.message);}
   finally{btn.disabled=false;btn.textContent='Registrar Nota ✨';}
@@ -1184,7 +1192,7 @@ function renderPink(){
   const tab=getTab(),el=document.getElementById('pk-personas');if(!tab||!el)return;
   const pk=tab.pink;
   el.innerHTML=pk.personas.map(p=>{
-    const esPaga=p.id===pk.paga,dep=p.tipo==='Dependiente_menor_12';
+    const esPaga=p.id===pk.paga,dep=p.tipo==='Dependiente_menor_12',varias=pk.personas.length>1;
     let info;
     if(dep)info=`Menor de 12: sus compras suman en la cuenta de <b>${esc(p.cuenta_id)}</b>`;
     else if(p.estado==='Activa')info=`<b>${fmtN(p.saldo)} pts</b> disponibles${p.vence?` · vencen el ${esc(p.vence)}`:''}`;
@@ -1195,9 +1203,9 @@ function renderPink(){
     if(!esPaga)acts.push(`<button class="pk-mini" onclick="pinkSetPaga('${esc(p.id)}')">Ella paga</button>`);
     if(esPaga&&p.puede_canjear)acts.push(`<button class="pk-mini ${pk.canje?'on':''}" onclick="pinkToggleCanje()">${pk.canje?'✓ Usando puntos':'Usar puntos'}</button>`);
     acts.push(`<button class="pk-mini" onclick="pinkQuitar('${esc(p.id)}')">Quitar</button>`);
-    return `<div class="pk-card ${esPaga?'paga':''}">
+    return `<div class="pk-card ${esPaga&&varias?'paga':''}">
       <div class="pk-top"><div class="pk-name">${esc(p.apodo)} <span class="pk-id">${esc(p.id)}</span></div>
-        ${esPaga?'<span class="pk-badge" style="background:var(--p);color:#fff;">Paga</span>':''}
+        ${esPaga&&varias?'<span class="pk-badge" style="background:var(--p);color:#fff;">Paga</span>':''}
         <span class="pk-badge pk-${dep?'Sin':pinkEstadoCls(p.estado)}">${dep?'Menor 12':esc(p.estado)}</span></div>
       <div class="pk-info">${info}</div>
       <div class="pk-acts">${acts.join('')}</div>
