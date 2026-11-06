@@ -768,6 +768,8 @@ function aplicarArtistaATodos(){
   renderItems();toast(`✅ Artista "${first.alias_artista}" aplicado a todos`);
 }
 function requiresArtista(item){return item.con_servicio||item.tipo==='S';}
+// TEMPORAL (06/11): mientras el equipo sigue con el Form viejo, una nota con servicio se puede registrar sin ID. Volver a true al lanzar.
+const REQUIERE_ID=false;
 // Todo servicio lleva clienta con ID, porque necesita seguimiento. Los ítems libres se reconocen por SKU o por su texto.
 function esServicio(i){
   return requiresArtista(i)||/^(PIR|TAT|REP|RET)-/i.test(i.sku||'')||(i.es_libre&&/perforaci|tatuaje|revisi/i.test(i.descripcion||''));
@@ -982,7 +984,7 @@ async function enviarNota(){
   }
   if(tab.items.some(esServicio)){
     if(tab.publico)return toast('⚠️ Público general es solo para productos. Esta nota lleva un servicio: elige a la clienta');
-    const sinId=tab.items.find(i=>esServicio(i)&&!i.id_receptora&&!tab.pink.paga);
+    const sinId=REQUIERE_ID&&tab.items.find(i=>esServicio(i)&&!i.id_receptora&&!tab.pink.paga);
     if(sinId)return toast('⚠️ Esta nota lleva un servicio: elige a la clienta en Pink Club');
   }
   if(!tab.publico&&!tab.emails_nota.length) return toast('⚠️ Agrega al menos un correo para la nota');
