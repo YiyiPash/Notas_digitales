@@ -255,7 +255,7 @@
     </div>
     <div class="field" style="margin-bottom:10px;"><label>Nombre clienta</label>
       <input type="text" id="nombre-clienta" placeholder="Nombre..." oninput="onNombre(this.value)">
-      <button class="btn-preset" id="btn-publico" type="button" onclick="togglePublico()">＋ Público general</button>
+      <button class="btn-preset" id="btn-publico" type="button" onclick="togglePublico()">＋ Público general (solo productos)</button>
     </div>
     <!-- Correos nota -->
     <div class="field" style="margin-bottom:11px;">
@@ -1398,7 +1398,7 @@ function togglePublico(){
 function renderPublico(){
   const tab=getTab(),b=document.getElementById('btn-publico'),r=document.getElementById('correo-req');
   if(!tab||!b)return;
-  b.textContent=tab.publico?'✓ Público general (toca para quitar)':'＋ Público general';
+  b.textContent=tab.publico?'✓ Público general (toca para quitar)':'＋ Público general (solo productos)';
   b.style.cssText=tab.publico?'border-style:solid;border-color:var(--p);color:var(--p);font-weight:600;':'';
   if(r)r.textContent=tab.publico?'(opcional)':'(requerido)';
 }
