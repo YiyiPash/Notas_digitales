@@ -495,18 +495,28 @@ function addEmailPreset(tipo){
 // ── INIT ────────────────────────────────────────────────────────────
 async function init(){
   const tab=crearTab();activeTabId=tab.id;
-  try{
-    const res=await fetch(`${AS_URL}?action=catalogo`);
-    const json=await res.json();
-    if(json.ok){
-      catalogo=json.data.catalogo||[];
-      artistas=json.data.artistas||[];
-      const _cs=catalogo.filter(i=>i.servicio);
-      console.log('[YP] Catálogo:',catalogo.length,'ítems,',_cs.length,'con perforación vinculada');
-      poblarLugares(json.data.puntos_venta||[]);
-      poblarElaboradores(json.data.elaboradores||[]);
-    }else{toast('⚠️ '+(json.error||'Error al cargar'));poblarFallback();}
-  }catch{toast('⚠️ Sin conexión');poblarFallback();}
+  // Abre al momento con el último catálogo de este celular; el nuevo llega por detrás y lo reemplaza
+  let guardado=null;
+  try{guardado=JSON.parse(localStorage.getItem('yp_cache_catalogo')||'null');}catch(e){}
+  const pedido=fetch(`${AS_URL}?action=catalogo`).then(r=>r.json()).then(json=>{
+    if(!json.ok)throw new Error(json.error||'Error al cargar');
+    try{localStorage.setItem('yp_cache_catalogo',JSON.stringify(json.data));}catch(e){}
+    return json.data;
+  });
+  const usarCatalogo=d=>{catalogo=d.catalogo||[];artistas=d.artistas||[];};
+  if(guardado){
+    usarCatalogo(guardado);
+    poblarLugares(guardado.puntos_venta||[]);
+    poblarElaboradores(guardado.elaboradores||[]);
+    pedido.then(d=>{usarCatalogo(d);renderItems();}).catch(()=>{});
+  }else{
+    try{
+      const d=await pedido;
+      usarCatalogo(d);
+      poblarLugares(d.puntos_venta||[]);
+      poblarElaboradores(d.elaboradores||[]);
+    }catch(e){toast('⚠️ '+(e.message||'Sin conexión'));poblarFallback();}
+  }
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('form-screen').style.display='block';
   loadTabForm(tab);
