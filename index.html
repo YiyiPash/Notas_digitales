@@ -1188,6 +1188,11 @@ function pinkSetPaga(id,auto){
   const nom=document.getElementById('nombre-clienta');
   const nomNota=p?(p.apodo||p.nombre):'';                 // en la nota va el apodo
   if(p&&!nom.value.trim()){nom.value=nomNota;onNombre(nomNota);}
+  // Correo del registro de quien paga: se pone solo en "correos de la nota" (se puede quitar). Si cambia quien paga, se cambia.
+  const ok=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e||'');
+  if(pk.email_auto&&pk.email_auto!==(p&&p.email)){const k=tab.emails_nota.indexOf(pk.email_auto);if(k>=0)tab.emails_nota.splice(k,1);pk.email_auto='';}
+  if(p&&ok(p.email)&&!tab.emails_nota.includes(p.email)){tab.emails_nota.push(p.email);pk.email_auto=p.email;}
+  renderEmailChips();
   if(!auto){renderPink();renderItems();}
 }
 function pinkQuitar(id){
