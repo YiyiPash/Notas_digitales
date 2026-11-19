@@ -1212,6 +1212,7 @@ function renderPink(){
     else if(p.estado==='Activa')info=`<b>${fmtN(p.saldo)} pts</b> disponibles${p.vence?` · vencen el ${esc(p.vence)}`:''}`;
     else if(p.estado==='Registrada')info=`<b>${fmtN(p.saldo)} pts</b> · le faltan <b>$${fmtN(p.falta_activar)}</b> en compras para activar y poder canjear`;
     else info=esc(p.estado);
+    if(!dep&&p.sin_aviso)info+=`<br>⚠️ <b>Aún no entra a su app del Pink Club</b>: esta compra no le dará puntos. Pídele que abra su link y acepte el aviso antes de cobrar.`;
     if(p.regalo_cumple)info+=`<br>🎁 <b>Tiene su regalo de cumpleaños</b>: márcalo en el artículo de regalo: arete, collar… (hasta $${fmtN(p.tope_regalo||200)})`;
     const acts=[];
     if(!esPaga)acts.push(`<button class="pk-mini" onclick="pinkSetPaga('${esc(p.id)}')">Ella paga</button>`);
